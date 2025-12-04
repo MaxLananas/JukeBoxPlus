@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "com.example.jukeboxplus.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "SoundManagerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
