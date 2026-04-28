@@ -43,14 +43,13 @@ public class JukeboxPlus implements ClientModInitializer {
         ModConfig.getInstance();
 
         musicTracker = new MusicTracker();
-        musicPlayer = new MusicPlayer(musicTracker);
+        musicPlayer  = new MusicPlayer(musicTracker);
         musicOverlay = new MusicOverlay(musicTracker, musicPlayer);
 
         registerKeybindings();
 
-        // Fix 1 : tickCounter.getTickDelta(true) remplace getLastFrameDuration()
         HudRenderCallback.EVENT.register((context, tickCounter) -> {
-            musicOverlay.render(context, tickCounter.getTickDelta(true));
+            musicOverlay.render(context, tickCounter.getTickProgress(true));
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -65,18 +64,16 @@ public class JukeboxPlus implements ClientModInitializer {
     }
 
     private void registerKeybindings() {
-        toggleOverlayKey = register("toggle", GLFW.GLFW_KEY_J);
-        openPlayerKey = register("player", GLFW.GLFW_KEY_M);
-        toggleHistoryKey = register("history", GLFW.GLFW_KEY_K);
-        playPauseKey = register("playpause", GLFW.GLFW_KEY_P);
-        stopKey = register("stop", GLFW.GLFW_KEY_O);
-        volumeUpKey = register("volume_up", GLFW.GLFW_KEY_PAGE_UP);
-        volumeDownKey = register("volume_down", GLFW.GLFW_KEY_PAGE_DOWN);
+        toggleOverlayKey = register("toggle",      GLFW.GLFW_KEY_J);
+        openPlayerKey    = register("player",      GLFW.GLFW_KEY_M);
+        toggleHistoryKey = register("history",     GLFW.GLFW_KEY_K);
+        playPauseKey     = register("playpause",   GLFW.GLFW_KEY_P);
+        stopKey          = register("stop",        GLFW.GLFW_KEY_O);
+        volumeUpKey      = register("volume_up",   GLFW.GLFW_KEY_PAGE_UP);
+        volumeDownKey    = register("volume_down", GLFW.GLFW_KEY_PAGE_DOWN);
     }
 
     private KeyBinding register(String name, int key) {
-        // Fix 2 : nouvelle signature KeyBinding pour 1.21.10
-        // plus de InputUtil.Type ni de Category, juste (translationKey, keyCode, category)
         return KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.jukeboxplus." + name,
                 key,
@@ -88,34 +85,28 @@ public class JukeboxPlus implements ClientModInitializer {
         while (toggleOverlayKey.wasPressed()) {
             musicOverlay.toggleVisibility();
         }
-
         while (openPlayerKey.wasPressed()) {
             client.setScreen(new MusicPlayerScreen(musicPlayer, musicTracker));
         }
-
         while (toggleHistoryKey.wasPressed()) {
             musicOverlay.toggleHistory();
         }
-
         while (playPauseKey.wasPressed()) {
             musicPlayer.togglePlayPause();
         }
-
         while (stopKey.wasPressed()) {
             musicPlayer.stop();
         }
-
         while (volumeUpKey.wasPressed()) {
             musicPlayer.adjustVolume(0.1f);
         }
-
         while (volumeDownKey.wasPressed()) {
             musicPlayer.adjustVolume(-0.1f);
         }
     }
 
-    public static JukeboxPlus getInstance() { return instance; }
-    public MusicTracker getMusicTracker() { return musicTracker; }
-    public MusicPlayer getMusicPlayer() { return musicPlayer; }
-    public MusicOverlay getMusicOverlay() { return musicOverlay; }
+    public static JukeboxPlus getInstance()        { return instance;     }
+    public MusicTracker getMusicTracker()           { return musicTracker; }
+    public MusicPlayer getMusicPlayer()             { return musicPlayer;  }
+    public MusicOverlay getMusicOverlay()           { return musicOverlay; }
 }
