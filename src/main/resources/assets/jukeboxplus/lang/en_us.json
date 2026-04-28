@@ -1,7 +1,30 @@
 {
+  "key.categories.jukeboxplus": "JukeboxPlus",
   "key.jukeboxplus.toggle": "Toggle Music Overlay",
-  "key.jukeboxplus.history": "Show Music History",
+  "key.jukeboxplus.player": "Open Music Player",
+  "key.jukeboxplus.history": "Toggle History",
+  "key.jukeboxplus.playpause": "Play/Pause",
+  "key.jukeboxplus.stop": "Stop Music",
   "key.jukeboxplus.volume_up": "Volume Up",
   "key.jukeboxplus.volume_down": "Volume Down",
-  "category.jukeboxplus": "JukeboxPlus"
+  
+  "text.jukeboxplus.now_playing": "Now Playing",
+  "text.jukeboxplus.paused": "Paused",
+  "text.jukeboxplus.stopped": "Stopped",
+  "text.jukeboxplus.no_music": "No music playing",
+  "text.jukeboxplus.history_empty": "No history yet",
+  "text.jukeboxplus.shuffle_on": "Shuffle: ON",
+  "text.jukeboxplus.shuffle_off": "Shuffle: OFF",
+  "text.jukeboxplus.repeat_on": "Repeat: ON",
+  "text.jukeboxplus.repeat_off": "Repeat: OFF",
+  
+  "category.jukeboxplus.all": "All Music",
+  "category.jukeboxplus.discs": "Music Discs",
+  "category.jukeboxplus.ambient": "Ambient",
+  "category.jukeboxplus.nether": "Nether",
+  "category.jukeboxplus.end": "The End",
+  
+  "gui.jukeboxplus.music_player": "Music Player",
+  "gui.jukeboxplus.volume": "Volume",
+  "gui.jukeboxplus.recently_played": "Recently Played"
 }
