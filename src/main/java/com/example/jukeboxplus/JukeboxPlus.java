@@ -11,6 +11,9 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.option.KeyBinding.Category;
+
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,32 +38,31 @@ public class JukeboxPlus implements ClientModInitializer {
     private static KeyBinding volumeUpKey;
     private static KeyBinding volumeDownKey;
 
+    private static final Category CATEGORY = Category.create("key.categories.jukeboxplus");
+
     @Override
     public void onInitializeClient() {
         instance = this;
 
-        LOGGER.info("[JukeboxPlus] Initializing...");
+        LOGGER.info("JukeboxPlus loading...");
 
         // Config
         ModConfig.getInstance();
 
-        // Core systems
+        // Init systems
         musicTracker = new MusicTracker();
         musicPlayer = new MusicPlayer(musicTracker);
-
-        // UI
         musicOverlay = new MusicOverlay(musicTracker, musicPlayer);
 
         // Keybinds
         registerKeybindings();
 
-        // HUD render
+        // HUD
         HudRenderCallback.EVENT.register((context, tickCounter) -> {
-            float tickDelta = tickCounter.getTickDelta(true);
-            musicOverlay.render(context, tickDelta);
+            musicOverlay.render(context, tickCounter.getTickDelta());
         });
 
-        // Game tick
+        // Tick
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
                 musicTracker.tick();
@@ -69,7 +71,7 @@ public class JukeboxPlus implements ClientModInitializer {
             }
         });
 
-        LOGGER.info("[JukeboxPlus] Loaded successfully!");
+        LOGGER.info("JukeboxPlus loaded!");
     }
 
     private void registerKeybindings() {
@@ -82,12 +84,12 @@ public class JukeboxPlus implements ClientModInitializer {
         volumeDownKey = register("volume_down", GLFW.GLFW_KEY_PAGE_DOWN);
     }
 
-    // Helper propre (évite duplication)
     private KeyBinding register(String name, int key) {
         return KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.jukeboxplus." + name,
+                InputUtil.Type.KEYSYM,
                 key,
-                "key.categories.jukeboxplus"
+                CATEGORY
         ));
     }
 
