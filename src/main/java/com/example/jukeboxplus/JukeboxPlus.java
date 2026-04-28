@@ -12,7 +12,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.option.KeyBinding.Category;
+import net.minecraft.util.Identifier;
 
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -38,8 +38,6 @@ public class JukeboxPlus implements ClientModInitializer {
     private static KeyBinding volumeUpKey;
     private static KeyBinding volumeDownKey;
 
-    private static final Category CATEGORY = Category.create("key.categories.jukeboxplus");
-
     @Override
     public void onInitializeClient() {
         instance = this;
@@ -57,9 +55,9 @@ public class JukeboxPlus implements ClientModInitializer {
         // Keybinds
         registerKeybindings();
 
-        // HUD
+        // HUD - CORRECTION ICI
         HudRenderCallback.EVENT.register((context, tickCounter) -> {
-            musicOverlay.render(context, tickCounter.getTickDelta());
+            musicOverlay.render(context, tickCounter.getLastFrameDuration());
         });
 
         // Tick
@@ -89,7 +87,7 @@ public class JukeboxPlus implements ClientModInitializer {
                 "key.jukeboxplus." + name,
                 InputUtil.Type.KEYSYM,
                 key,
-                CATEGORY
+                Identifier.of(MOD_ID, "category") // CORRECTION ICI
         ));
     }
 
