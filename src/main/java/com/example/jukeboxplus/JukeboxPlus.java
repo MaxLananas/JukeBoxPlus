@@ -11,9 +11,6 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.util.Identifier;
-
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +26,6 @@ public class JukeboxPlus implements ClientModInitializer {
     private MusicPlayer musicPlayer;
     private MusicOverlay musicOverlay;
 
-    // Keybinds
     private static KeyBinding toggleOverlayKey;
     private static KeyBinding openPlayerKey;
     private static KeyBinding toggleHistoryKey;
@@ -44,23 +40,19 @@ public class JukeboxPlus implements ClientModInitializer {
 
         LOGGER.info("JukeboxPlus loading...");
 
-        // Config
         ModConfig.getInstance();
 
-        // Init systems
         musicTracker = new MusicTracker();
         musicPlayer = new MusicPlayer(musicTracker);
         musicOverlay = new MusicOverlay(musicTracker, musicPlayer);
 
-        // Keybinds
         registerKeybindings();
 
-        // HUD - CORRECTION ICI
+        // Fix 1 : tickCounter.getTickDelta(true) remplace getLastFrameDuration()
         HudRenderCallback.EVENT.register((context, tickCounter) -> {
-            musicOverlay.render(context, tickCounter.getLastFrameDuration());
+            musicOverlay.render(context, tickCounter.getTickDelta(true));
         });
 
-        // Tick
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
                 musicTracker.tick();
@@ -83,11 +75,12 @@ public class JukeboxPlus implements ClientModInitializer {
     }
 
     private KeyBinding register(String name, int key) {
+        // Fix 2 : nouvelle signature KeyBinding pour 1.21.10
+        // plus de InputUtil.Type ni de Category, juste (translationKey, keyCode, category)
         return KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.jukeboxplus." + name,
-                InputUtil.Type.KEYSYM,
                 key,
-                Identifier.of(MOD_ID, "category") // CORRECTION ICI
+                "key.jukeboxplus.category"
         ));
     }
 
@@ -121,19 +114,8 @@ public class JukeboxPlus implements ClientModInitializer {
         }
     }
 
-    public static JukeboxPlus getInstance() {
-        return instance;
-    }
-
-    public MusicTracker getMusicTracker() {
-        return musicTracker;
-    }
-
-    public MusicPlayer getMusicPlayer() {
-        return musicPlayer;
-    }
-
-    public MusicOverlay getMusicOverlay() {
-        return musicOverlay;
-    }
+    public static JukeboxPlus getInstance() { return instance; }
+    public MusicTracker getMusicTracker() { return musicTracker; }
+    public MusicPlayer getMusicPlayer() { return musicPlayer; }
+    public MusicOverlay getMusicOverlay() { return musicOverlay; }
 }
