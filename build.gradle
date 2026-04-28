@@ -1,28 +1,28 @@
 plugins {
-    id 'fabric-loom' version '1.16-SNAPSHOT'
+    id 'fabric-loom' version '1.9-SNAPSHOT'
     id 'maven-publish'
 }
 
-version = "3.6.0"
-group = "com.example"
+version = project.mod_version
+group = project.maven_group
 
 base {
-    archivesName = "jukeboxplus"
+    archivesName = project.archives_base_name
 }
 
 repositories {
     mavenCentral()
-    maven { 
+    maven {
         name = 'Fabric'
-        url = 'https://maven.fabricmc.net/' 
+        url = 'https://maven.fabricmc.net/'
     }
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:1.21.10"
-    mappings "net.fabricmc:yarn:1.21.10+build.3:v2"
-    modImplementation "net.fabricmc:fabric-loader:0.19.2"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:0.138.4+1.21.10"
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 }
 
 java {
@@ -37,7 +37,6 @@ tasks.withType(JavaCompile).configureEach {
 
 processResources {
     inputs.property "version", project.version
-    
     filesMatching("fabric.mod.json") {
         expand "version": project.version
     }
