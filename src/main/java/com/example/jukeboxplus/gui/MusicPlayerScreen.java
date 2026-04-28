@@ -2,6 +2,7 @@ package com.example.jukeboxplus.gui;
 
 import com.example.jukeboxplus.music.MusicDatabase;
 import com.example.jukeboxplus.music.MusicInfo;
+import com.example.jukeboxplus.music.MusicInfo.MusicType;
 import com.example.jukeboxplus.music.MusicPlayer;
 import com.example.jukeboxplus.music.MusicTracker;
 import net.minecraft.client.MinecraftClient;
@@ -30,16 +31,16 @@ public class MusicPlayerScreen extends Screen {
     private int hoveredIndex = -1;
     private long openTime;
 
-    private static final int BG_COLOR        = 0xFF121212;
-    private static final int PANEL_COLOR     = 0xFF1E1E1E;
-    private static final int CARD_COLOR      = 0xFF2A2A2A;
-    private static final int CARD_HOVER      = 0xFF333333;
-    private static final int CARD_PLAYING    = 0xFF1A3A1A;
-    private static final int ACCENT_COLOR    = 0xFF1DB954;
-    private static final int TEXT_PRIMARY    = 0xFFFFFFFF;
-    private static final int TEXT_SECONDARY  = 0xFFB3B3B3;
-    private static final int TEXT_MUTED      = 0xFF535353;
-    private static final int DANGER_COLOR    = 0xFFE74C3C;
+    private static final int BG_COLOR       = 0xFF121212;
+    private static final int PANEL_COLOR    = 0xFF1E1E1E;
+    private static final int CARD_COLOR     = 0xFF2A2A2A;
+    private static final int CARD_HOVER     = 0xFF333333;
+    private static final int CARD_PLAYING   = 0xFF1A3A1A;
+    private static final int ACCENT_COLOR   = 0xFF1DB954;
+    private static final int TEXT_PRIMARY   = 0xFFFFFFFF;
+    private static final int TEXT_SECONDARY = 0xFFB3B3B3;
+    private static final int TEXT_MUTED     = 0xFF535353;
+    private static final int DANGER_COLOR   = 0xFFE74C3C;
 
     private int panelX, panelY, panelW, panelH;
 
@@ -54,8 +55,8 @@ public class MusicPlayerScreen extends Screen {
 
     public MusicPlayerScreen(MusicPlayer player, MusicTracker tracker) {
         super(Text.literal("Music Player"));
-        this.player  = player;
-        this.tracker = tracker;
+        this.player   = player;
+        this.tracker  = tracker;
         this.openTime = System.currentTimeMillis();
         loadMusicList();
     }
@@ -65,10 +66,10 @@ public class MusicPlayerScreen extends Screen {
         displayedMusic = new ArrayList<>();
         for (MusicInfo m : all) {
             boolean include = switch (selectedCategory) {
-                case 1  -> m.isDisc();
-                case 2  -> m.isAmbient();
-                case 3  -> m.isNether();
-                case 4  -> m.isEnd();
+                case 1  -> m.getType() == MusicType.DISC;
+                case 2  -> m.getType() == MusicType.AMBIENT || m.getType() == MusicType.CREATIVE;
+                case 3  -> m.getType() == MusicType.NETHER;
+                case 4  -> m.getType() == MusicType.END;
                 default -> true;
             };
             if (include) displayedMusic.add(m);
@@ -87,7 +88,6 @@ public class MusicPlayerScreen extends Screen {
         panelY = (int) ((height - panelH) / 2 + (1f - ease) * 30);
 
         context.fill(0, 0, width, height, 0xCC000000);
-
         drawRoundedRect(context, panelX, panelY, panelW, panelH, PANEL_COLOR);
         drawRoundedRect(context, panelX - 2, panelY - 2, panelW + 4, panelH + 4,
                 withAlpha(0xFF000000, 80));
@@ -105,7 +105,8 @@ public class MusicPlayerScreen extends Screen {
 
     private void renderHeader(DrawContext context, int mouseX, int mouseY) {
         int headerH = 36;
-        drawRoundedRect(context, panelX, panelY, panelW, headerH, darkenColor(PANEL_COLOR, 0.5f));
+        drawRoundedRect(context, panelX, panelY, panelW, headerH,
+                darkenColor(PANEL_COLOR, 0.5f));
 
         float bounce = (float) Math.sin(System.currentTimeMillis() / 800.0) * 1.5f;
         String title = "# MUSIC PLAYER #";
@@ -142,7 +143,6 @@ public class MusicPlayerScreen extends Screen {
         int discX = panelX + 18;
         int discY = sectionY + 10;
         int discR  = 28;
-        long now   = System.currentTimeMillis();
         int color  = current.getDiscColor();
 
         for (int r = discR; r > 0; r--) {
@@ -152,11 +152,10 @@ public class MusicPlayerScreen extends Screen {
         }
 
         if (player.isPlaying()) {
-            double angle = (now / 800.0) % (Math.PI * 2);
-            int holeR = 5;
+            double angle = (System.currentTimeMillis() / 800.0) % (Math.PI * 2);
             int holeX = (int)(discX + discR + Math.cos(angle) * 8);
             int holeY = (int)(discY + discR + Math.sin(angle) * 8);
-            fillCircle(context, holeX, holeY, holeR, 0xFF000000);
+            fillCircle(context, holeX, holeY, 5, 0xFF000000);
         } else {
             fillCircle(context, discX + discR, discY + discR, 5, 0xFF000000);
         }
@@ -178,7 +177,7 @@ public class MusicPlayerScreen extends Screen {
         context.drawTextWithShadow(textRenderer, Text.literal(artist),
                 infoX, infoY + 12, TEXT_SECONDARY);
 
-        String typeTag = "[" + current.getTypeLabel() + "]";
+        String typeTag = "[" + current.getType().displayName + "]";
         context.drawTextWithShadow(textRenderer, Text.literal(typeTag),
                 infoX, infoY + 24, TEXT_MUTED);
 
@@ -192,12 +191,12 @@ public class MusicPlayerScreen extends Screen {
         context.fill(barX, barY, barX + (int)(barW * progress), barY + barH, ACCENT_COLOR);
         fillCircle(context, barX + (int)(barW * progress), barY + barH / 2, 4, ACCENT_COLOR);
 
-        String elapsed = formatTime(current.getElapsedSeconds());
-        String total   = formatTime(current.getTotalSeconds());
-        context.drawTextWithShadow(textRenderer, Text.literal(elapsed),
+        String elapsedStr = formatTime(current.getElapsedSeconds());
+        String totalStr   = formatTime(current.getDurationSeconds());
+        context.drawTextWithShadow(textRenderer, Text.literal(elapsedStr),
                 barX, barY + 8, TEXT_MUTED);
-        int totalW = textRenderer.getWidth(total);
-        context.drawTextWithShadow(textRenderer, Text.literal(total),
+        int totalW = textRenderer.getWidth(totalStr);
+        context.drawTextWithShadow(textRenderer, Text.literal(totalStr),
                 barX + barW - totalW, barY + 8, TEXT_MUTED);
 
         renderPlaybackControls(context, mouseX, mouseY, sectionY + sectionH - 22);
@@ -226,8 +225,8 @@ public class MusicPlayerScreen extends Screen {
 
         drawRoundedRect(context, playBtnX, playBtnY, BTN_SIZE, BTN_SIZE,
                 hPlay ? darkenColor(ACCENT_COLOR, 0.7f) : ACCENT_COLOR);
-        String playLabel = player.isPlaying() ? "II" : ">";
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal(playLabel),
+        context.drawCenteredTextWithShadow(textRenderer,
+                Text.literal(player.isPlaying() ? "II" : ">"),
                 playBtnX + BTN_SIZE / 2, playBtnY + 6, TEXT_PRIMARY);
 
         drawRoundedRect(context, nextBtnX, nextBtnY, BTN_SIZE, BTN_SIZE,
@@ -251,12 +250,12 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void renderCategories(DrawContext context, int mouseX, int mouseY) {
-        int catY  = panelY + 178;
-        int catH  = 22;
-        int tabW  = (panelW - 12) / CATEGORIES.length;
+        int catY = panelY + 178;
+        int catH = 22;
+        int tabW = (panelW - 12) / CATEGORIES.length;
 
         for (int i = 0; i < CATEGORIES.length; i++) {
-            int tabX   = panelX + 6 + i * tabW;
+            int tabX    = panelX + 6 + i * tabW;
             boolean sel   = (i == selectedCategory);
             boolean hover = isInBounds(mouseX, mouseY, tabX, catY, tabW - 2, catH);
 
@@ -275,14 +274,15 @@ public class MusicPlayerScreen extends Screen {
         int listH  = panelH - 204 - 36;
         int itemH  = 24;
 
-        drawRoundedRect(context, panelX + 6, listY, panelW - 12, listH, darkenColor(PANEL_COLOR, 0.6f));
+        drawRoundedRect(context, panelX + 6, listY, panelW - 12, listH,
+                darkenColor(PANEL_COLOR, 0.6f));
 
         int visible = Math.min(MAX_VISIBLE, displayedMusic.size() - scrollOffset);
 
         for (int i = 0; i < visible; i++) {
-            int idx   = i + scrollOffset;
+            int idx     = i + scrollOffset;
             MusicInfo m = displayedMusic.get(idx);
-            int itemY = listY + i * itemH;
+            int itemY   = listY + i * itemH;
 
             boolean hover   = isInBounds(mouseX, mouseY, panelX + 8, itemY, panelW - 16, itemH);
             boolean playing = player.getCurrentMusic() == m;
@@ -293,8 +293,7 @@ public class MusicPlayerScreen extends Screen {
             if (bg != 0x00000000)
                 context.fill(panelX + 8, itemY, panelX + panelW - 8, itemY + itemH, bg);
 
-            int discColor = m.getDiscColor();
-            fillCircle(context, panelX + 18, itemY + itemH / 2, 6, discColor);
+            fillCircle(context, panelX + 18, itemY + itemH / 2, 6, m.getDiscColor());
 
             if (playing) {
                 context.drawTextWithShadow(textRenderer, Text.literal(">"),
@@ -311,17 +310,18 @@ public class MusicPlayerScreen extends Screen {
             context.drawTextWithShadow(textRenderer, Text.literal(a),
                     panelX + 28, itemY + 14, TEXT_SECONDARY);
 
-            String dur = formatTime(m.getTotalSeconds());
-            int durW = textRenderer.getWidth(dur);
+            String dur  = formatTime(m.getDurationSeconds());
+            int durW    = textRenderer.getWidth(dur);
             context.drawTextWithShadow(textRenderer, Text.literal(dur),
                     panelX + panelW - durW - 12, itemY + 8, TEXT_MUTED);
         }
 
         if (displayedMusic.size() > MAX_VISIBLE) {
-            int scrollBarH  = listH;
-            int thumbH      = Math.max(20, scrollBarH * MAX_VISIBLE / displayedMusic.size());
-            int thumbY      = listY + scrollOffset * (scrollBarH - thumbH) / (displayedMusic.size() - MAX_VISIBLE);
-            int scrollBarX  = panelX + panelW - 10;
+            int scrollBarH = listH;
+            int thumbH     = Math.max(20, scrollBarH * MAX_VISIBLE / displayedMusic.size());
+            int thumbY     = listY + scrollOffset * (scrollBarH - thumbH)
+                             / Math.max(1, displayedMusic.size() - MAX_VISIBLE);
+            int scrollBarX = panelX + panelW - 10;
 
             context.fill(scrollBarX, listY, scrollBarX + 4, listY + scrollBarH, CARD_COLOR);
             context.fill(scrollBarX, thumbY, scrollBarX + 4, thumbY + thumbH, TEXT_SECONDARY);
@@ -330,12 +330,13 @@ public class MusicPlayerScreen extends Screen {
 
     private void renderFooter(DrawContext context, int mouseX, int mouseY) {
         int footerY = panelY + panelH - 32;
-        drawRoundedRect(context, panelX, footerY, panelW, 32, darkenColor(PANEL_COLOR, 0.5f));
+        drawRoundedRect(context, panelX, footerY, panelW, 32,
+                darkenColor(PANEL_COLOR, 0.5f));
 
         shuffleBtnX = panelX + 10;
         shuffleBtnY = footerY + 6;
-        boolean hShuffle = isInBounds(mouseX, mouseY, shuffleBtnX, shuffleBtnY, 40, 18);
-        boolean shuffleOn = player.isShuffleEnabled();
+        boolean hShuffle  = isInBounds(mouseX, mouseY, shuffleBtnX, shuffleBtnY, 40, 18);
+        boolean shuffleOn = player.isShuffle();
         drawRoundedRect(context, shuffleBtnX, shuffleBtnY, 40, 18,
                 shuffleOn ? ACCENT_COLOR : (hShuffle ? CARD_HOVER : CARD_COLOR));
         context.drawCenteredTextWithShadow(textRenderer, Text.literal("[S]"),
@@ -344,8 +345,8 @@ public class MusicPlayerScreen extends Screen {
 
         repeatBtnX = panelX + 58;
         repeatBtnY = footerY + 6;
-        boolean hRepeat = isInBounds(mouseX, mouseY, repeatBtnX, repeatBtnY, 40, 18);
-        boolean repeatOn = player.isRepeatEnabled();
+        boolean hRepeat  = isInBounds(mouseX, mouseY, repeatBtnX, repeatBtnY, 40, 18);
+        boolean repeatOn = player.isRepeat();
         drawRoundedRect(context, repeatBtnX, repeatBtnY, 40, 18,
                 repeatOn ? ACCENT_COLOR : (hRepeat ? CARD_HOVER : CARD_COLOR));
         context.drawCenteredTextWithShadow(textRenderer, Text.literal("[R]"),
@@ -353,7 +354,7 @@ public class MusicPlayerScreen extends Screen {
                 repeatOn ? TEXT_PRIMARY : TEXT_SECONDARY);
 
         String credit = "Made by maxlananas";
-        int creditW = textRenderer.getWidth(credit);
+        int creditW   = textRenderer.getWidth(credit);
         context.drawTextWithShadow(textRenderer, Text.literal(credit),
                 panelX + panelW - creditW - 8, footerY + 10, TEXT_MUTED);
     }
@@ -403,8 +404,8 @@ public class MusicPlayerScreen extends Screen {
             return true;
         }
 
-        int tabW  = (panelW - 12) / CATEGORIES.length;
-        int catY  = panelY + 178;
+        int tabW = (panelW - 12) / CATEGORIES.length;
+        int catY = panelY + 178;
         for (int i = 0; i < CATEGORIES.length; i++) {
             int tabX = panelX + 6 + i * tabW;
             if (isInBounds(mx, my, tabX, catY, tabW - 2, 22)) {
@@ -417,7 +418,8 @@ public class MusicPlayerScreen extends Screen {
 
         int listY = panelY + 204;
         int itemH = 24;
-        for (int i = 0; i < Math.min(MAX_VISIBLE, displayedMusic.size() - scrollOffset); i++) {
+        int visible = Math.min(MAX_VISIBLE, displayedMusic.size() - scrollOffset);
+        for (int i = 0; i < visible; i++) {
             int idx   = i + scrollOffset;
             int itemY = listY + i * itemH;
             if (isInBounds(mx, my, panelX + 8, itemY, panelW - 16, itemH)) {
@@ -431,7 +433,8 @@ public class MusicPlayerScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+    public boolean mouseScrolled(double mouseX, double mouseY,
+                                 double horizontalAmount, double verticalAmount) {
         int maxScroll = Math.max(0, displayedMusic.size() - MAX_VISIBLE);
         scrollOffset  = MathHelper.clamp(scrollOffset - (int) verticalAmount, 0, maxScroll);
         return true;
