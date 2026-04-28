@@ -1,25 +1,31 @@
 {
   "schemaVersion": 1,
   "id": "jukeboxplus",
-  "version": "3.7.0",
+  "version": "${version}",
   "name": "JukeboxPlus",
-  "description": "Spotify-like music overlay for Minecraft",
-  "authors": ["maxlananas"],
-  "contact": {},
+  "description": "Enhanced music player for Minecraft",
+  "authors": ["MaxLananas"],
+  "contact": {
+    "sources": "https://github.com/MaxLananas/JukeBoxPlus"
+  },
   "license": "MIT",
   "icon": "assets/jukeboxplus/icon.png",
+  
   "environment": "client",
+  
   "entrypoints": {
     "client": [
       "com.example.jukeboxplus.JukeboxPlus"
     ]
   },
+  
   "mixins": [
     "jukeboxplus.mixins.json"
   ],
+  
   "depends": {
     "fabricloader": ">=0.19.2",
-    "minecraft": "1.21.10",
+    "minecraft": "~1.21.10",
     "java": ">=21",
     "fabric-api": "*"
   }
