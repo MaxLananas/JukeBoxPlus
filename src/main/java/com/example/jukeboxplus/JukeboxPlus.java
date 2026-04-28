@@ -21,6 +21,7 @@ public class JukeboxPlus implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static JukeboxPlus instance;
+
     private MusicTracker musicTracker;
     private MusicPlayer musicPlayer;
     private MusicOverlay musicOverlay;
@@ -38,28 +39,28 @@ public class JukeboxPlus implements ClientModInitializer {
     public void onInitializeClient() {
         instance = this;
 
-        LOGGER.info("JukeboxPlus loading...");
+        LOGGER.info("[JukeboxPlus] Initializing...");
 
         // Config
         ModConfig.getInstance();
 
-        // Systems
+        // Core systems
         musicTracker = new MusicTracker();
         musicPlayer = new MusicPlayer(musicTracker);
 
-        // Overlay
+        // UI
         musicOverlay = new MusicOverlay(musicTracker, musicPlayer);
 
         // Keybinds
         registerKeybindings();
 
-        // HUD
+        // HUD render
         HudRenderCallback.EVENT.register((context, tickCounter) -> {
             float tickDelta = tickCounter.getTickDelta(true);
             musicOverlay.render(context, tickDelta);
         });
 
-        // Tick
+        // Game tick
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
                 musicTracker.tick();
@@ -68,49 +69,24 @@ public class JukeboxPlus implements ClientModInitializer {
             }
         });
 
-        LOGGER.info("JukeboxPlus loaded!");
+        LOGGER.info("[JukeboxPlus] Loaded successfully!");
     }
 
     private void registerKeybindings() {
-        toggleOverlayKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.jukeboxplus.toggle",
-                GLFW.GLFW_KEY_J,
-                "key.categories.jukeboxplus"
-        ));
+        toggleOverlayKey = register("toggle", GLFW.GLFW_KEY_J);
+        openPlayerKey = register("player", GLFW.GLFW_KEY_M);
+        toggleHistoryKey = register("history", GLFW.GLFW_KEY_K);
+        playPauseKey = register("playpause", GLFW.GLFW_KEY_P);
+        stopKey = register("stop", GLFW.GLFW_KEY_O);
+        volumeUpKey = register("volume_up", GLFW.GLFW_KEY_PAGE_UP);
+        volumeDownKey = register("volume_down", GLFW.GLFW_KEY_PAGE_DOWN);
+    }
 
-        openPlayerKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.jukeboxplus.player",
-                GLFW.GLFW_KEY_M,
-                "key.categories.jukeboxplus"
-        ));
-
-        toggleHistoryKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.jukeboxplus.history",
-                GLFW.GLFW_KEY_K,
-                "key.categories.jukeboxplus"
-        ));
-
-        playPauseKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.jukeboxplus.playpause",
-                GLFW.GLFW_KEY_P,
-                "key.categories.jukeboxplus"
-        ));
-
-        stopKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.jukeboxplus.stop",
-                GLFW.GLFW_KEY_O,
-                "key.categories.jukeboxplus"
-        ));
-
-        volumeUpKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.jukeboxplus.volume_up",
-                GLFW.GLFW_KEY_PAGE_UP,
-                "key.categories.jukeboxplus"
-        ));
-
-        volumeDownKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.jukeboxplus.volume_down",
-                GLFW.GLFW_KEY_PAGE_DOWN,
+    // Helper propre (évite duplication)
+    private KeyBinding register(String name, int key) {
+        return KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "key.jukeboxplus." + name,
+                key,
                 "key.categories.jukeboxplus"
         ));
     }
