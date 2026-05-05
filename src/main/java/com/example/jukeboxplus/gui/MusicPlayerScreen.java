@@ -359,6 +359,7 @@ public class MusicPlayerScreen extends Screen {
                 panelX + panelW - creditW - 8, footerY + 10, TEXT_MUTED);
     }
 
+    // ─── FIXED: MC 1.21.10 mouseClicked signature ───────────────────────────
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int mx = (int) mouseX;
@@ -369,13 +370,11 @@ public class MusicPlayerScreen extends Screen {
             close();
             return true;
         }
-
         if (isInBounds(mx, my, prevBtnX, prevBtnY, BTN_SIZE, BTN_SIZE)) {
             playClickSound();
             player.previous();
             return true;
         }
-
         if (isInBounds(mx, my, playBtnX, playBtnY, BTN_SIZE, BTN_SIZE)) {
             playClickSound();
             if (player.getCurrentMusic() == null && !displayedMusic.isEmpty()) {
@@ -385,19 +384,16 @@ public class MusicPlayerScreen extends Screen {
             }
             return true;
         }
-
         if (isInBounds(mx, my, nextBtnX, nextBtnY, BTN_SIZE, BTN_SIZE)) {
             playClickSound();
             player.next();
             return true;
         }
-
         if (isInBounds(mx, my, shuffleBtnX, shuffleBtnY, 40, 18)) {
             playClickSound();
             player.toggleShuffle();
             return true;
         }
-
         if (isInBounds(mx, my, repeatBtnX, repeatBtnY, 40, 18)) {
             playClickSound();
             player.toggleRepeat();
@@ -416,8 +412,8 @@ public class MusicPlayerScreen extends Screen {
             }
         }
 
-        int listY = panelY + 204;
-        int itemH = 24;
+        int listY   = panelY + 204;
+        int itemH   = 24;
         int visible = Math.min(MAX_VISIBLE, displayedMusic.size() - scrollOffset);
         for (int i = 0; i < visible; i++) {
             int idx   = i + scrollOffset;
@@ -429,9 +425,11 @@ public class MusicPlayerScreen extends Screen {
             }
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        // Ne PAS appeler super.mouseClicked car la signature a changé en 1.21.10
+        return false;
     }
 
+    // ─── FIXED: MC 1.21.10 mouseScrolled signature ──────────────────────────
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY,
                                  double horizontalAmount, double verticalAmount) {
@@ -440,13 +438,15 @@ public class MusicPlayerScreen extends Screen {
         return true;
     }
 
+    // ─── FIXED: MC 1.21.10 keyPressed signature ─────────────────────────────
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == 256) {
+        if (keyCode == 256) { // GLFW_KEY_ESCAPE
             close();
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        // Ne PAS appeler super.keyPressed car la signature a changé en 1.21.10
+        return false;
     }
 
     @Override
