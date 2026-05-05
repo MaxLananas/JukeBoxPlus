@@ -11,6 +11,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,7 @@ public class JukeboxPlus implements ClientModInitializer {
     private static JukeboxPlus instance;
 
     private MusicTracker musicTracker;
-    private MusicPlayer musicPlayer;
+    private MusicPlayer  musicPlayer;
     private MusicOverlay musicOverlay;
 
     private static KeyBinding toggleOverlayKey;
@@ -73,9 +74,12 @@ public class JukeboxPlus implements ClientModInitializer {
         volumeDownKey    = register("volume_down", GLFW.GLFW_KEY_PAGE_DOWN);
     }
 
+    // ─── FIXED: MC 1.21.10 KeyBinding ne prend plus une String pour la catégorie
+    // Il faut passer le type InputUtil.Type et utiliser la surcharge correcte
     private KeyBinding register(String name, int key) {
         return KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.jukeboxplus." + name,
+                InputUtil.Type.KEYSYM,
                 key,
                 "key.jukeboxplus.category"
         ));
@@ -105,8 +109,8 @@ public class JukeboxPlus implements ClientModInitializer {
         }
     }
 
-    public static JukeboxPlus getInstance()        { return instance;     }
-    public MusicTracker getMusicTracker()           { return musicTracker; }
-    public MusicPlayer getMusicPlayer()             { return musicPlayer;  }
-    public MusicOverlay getMusicOverlay()           { return musicOverlay; }
+    public static JukeboxPlus getInstance()  { return instance;     }
+    public MusicTracker getMusicTracker()     { return musicTracker; }
+    public MusicPlayer  getMusicPlayer()      { return musicPlayer;  }
+    public MusicOverlay getMusicOverlay()     { return musicOverlay; }
 }
