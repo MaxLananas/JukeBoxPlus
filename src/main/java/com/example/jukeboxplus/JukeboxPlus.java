@@ -38,7 +38,6 @@ public class JukeboxPlus implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         instance = this;
-
         LOGGER.info("JukeboxPlus loading...");
 
         ModConfig.getInstance();
@@ -49,9 +48,8 @@ public class JukeboxPlus implements ClientModInitializer {
 
         registerKeybindings();
 
-        HudRenderCallback.EVENT.register((context, tickCounter) -> {
-            musicOverlay.render(context, tickCounter.getTickProgress(true));
-        });
+        HudRenderCallback.EVENT.register((context, tickCounter) ->
+                musicOverlay.render(context, tickCounter.getTickProgress(true)));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
@@ -74,9 +72,9 @@ public class JukeboxPlus implements ClientModInitializer {
         volumeDownKey    = register("volume_down", GLFW.GLFW_KEY_PAGE_DOWN);
     }
 
-    // ─── FIXED: MC 1.21.10 KeyBinding ne prend plus une String pour la catégorie
-    // Il faut passer le type InputUtil.Type et utiliser la surcharge correcte
     private KeyBinding register(String name, int key) {
+        // Correction : utilisation de InputUtil.Type.KEYSYM
+        // pour éviter l'erreur "String cannot be converted to Category"
         return KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.jukeboxplus." + name,
                 InputUtil.Type.KEYSYM,
@@ -86,27 +84,20 @@ public class JukeboxPlus implements ClientModInitializer {
     }
 
     private void handleKeybinds(MinecraftClient client) {
-        while (toggleOverlayKey.wasPressed()) {
+        while (toggleOverlayKey.wasPressed())
             musicOverlay.toggleVisibility();
-        }
-        while (openPlayerKey.wasPressed()) {
+        while (openPlayerKey.wasPressed())
             client.setScreen(new MusicPlayerScreen(musicPlayer, musicTracker));
-        }
-        while (toggleHistoryKey.wasPressed()) {
+        while (toggleHistoryKey.wasPressed())
             musicOverlay.toggleHistory();
-        }
-        while (playPauseKey.wasPressed()) {
+        while (playPauseKey.wasPressed())
             musicPlayer.togglePlayPause();
-        }
-        while (stopKey.wasPressed()) {
+        while (stopKey.wasPressed())
             musicPlayer.stop();
-        }
-        while (volumeUpKey.wasPressed()) {
+        while (volumeUpKey.wasPressed())
             musicPlayer.adjustVolume(0.1f);
-        }
-        while (volumeDownKey.wasPressed()) {
+        while (volumeDownKey.wasPressed())
             musicPlayer.adjustVolume(-0.1f);
-        }
     }
 
     public static JukeboxPlus getInstance()  { return instance;     }
