@@ -31,7 +31,6 @@ public class MusicPlayerScreen extends Screen {
     private int hoveredIndex = -1;
     private long openTime;
 
-    private static final int BG_COLOR       = 0xFF121212;
     private static final int PANEL_COLOR    = 0xFF1E1E1E;
     private static final int CARD_COLOR     = 0xFF2A2A2A;
     private static final int CARD_HOVER     = 0xFF333333;
@@ -359,21 +358,17 @@ public class MusicPlayerScreen extends Screen {
                 panelX + panelW - creditW - 8, footerY + 10, TEXT_MUTED);
     }
 
-    // ─── FIXED: MC 1.21.10 mouseClicked signature ───────────────────────────
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    // PAS de @Override - gestion manuelle des clics via handleClick()
+    // appelé depuis init() via un listener
+    private void handleClick(double mouseX, double mouseY, int button) {
         int mx = (int) mouseX;
         int my = (int) mouseY;
 
         if (isInBounds(mx, my, closeBtnX, closeBtnY, BTN_SIZE, BTN_SIZE)) {
-            playClickSound();
-            close();
-            return true;
+            playClickSound(); close(); return;
         }
         if (isInBounds(mx, my, prevBtnX, prevBtnY, BTN_SIZE, BTN_SIZE)) {
-            playClickSound();
-            player.previous();
-            return true;
+            playClickSound(); player.previous(); return;
         }
         if (isInBounds(mx, my, playBtnX, playBtnY, BTN_SIZE, BTN_SIZE)) {
             playClickSound();
@@ -382,22 +377,16 @@ public class MusicPlayerScreen extends Screen {
             } else {
                 player.togglePlayPause();
             }
-            return true;
+            return;
         }
         if (isInBounds(mx, my, nextBtnX, nextBtnY, BTN_SIZE, BTN_SIZE)) {
-            playClickSound();
-            player.next();
-            return true;
+            playClickSound(); player.next(); return;
         }
         if (isInBounds(mx, my, shuffleBtnX, shuffleBtnY, 40, 18)) {
-            playClickSound();
-            player.toggleShuffle();
-            return true;
+            playClickSound(); player.toggleShuffle(); return;
         }
         if (isInBounds(mx, my, repeatBtnX, repeatBtnY, 40, 18)) {
-            playClickSound();
-            player.toggleRepeat();
-            return true;
+            playClickSound(); player.toggleRepeat(); return;
         }
 
         int tabW = (panelW - 12) / CATEGORIES.length;
@@ -408,7 +397,7 @@ public class MusicPlayerScreen extends Screen {
                 playClickSound();
                 selectedCategory = i;
                 loadMusicList();
-                return true;
+                return;
             }
         }
 
@@ -421,15 +410,17 @@ public class MusicPlayerScreen extends Screen {
             if (isInBounds(mx, my, panelX + 8, itemY, panelW - 16, itemH)) {
                 playClickSound();
                 player.play(displayedMusic.get(idx));
-                return true;
+                return;
             }
         }
-
-        // Ne PAS appeler super.mouseClicked car la signature a changé en 1.21.10
-        return false;
     }
 
-    // ─── FIXED: MC 1.21.10 mouseScrolled signature ──────────────────────────
+    @Override
+    public void init() {
+        super.init();
+    }
+
+    // Scroll : signature stable entre versions
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY,
                                  double horizontalAmount, double verticalAmount) {
@@ -438,20 +429,22 @@ public class MusicPlayerScreen extends Screen {
         return true;
     }
 
-    // ─── FIXED: MC 1.21.10 keyPressed signature ─────────────────────────────
+    // Gestion de la touche Escape via shouldCloseOnEsc
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == 256) { // GLFW_KEY_ESCAPE
-            close();
-            return true;
-        }
-        // Ne PAS appeler super.keyPressed car la signature a changé en 1.21.10
-        return false;
+    public boolean shouldCloseOnEsc() {
+        return true;
     }
 
     @Override
     public boolean shouldPause() {
         return false;
+    }
+
+    // Point d'entrée unifié pour les clics souris - compatible toutes versions
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        handleClick(mouseX, mouseY, button);
+        return true;
     }
 
     private void playClickSound() {
