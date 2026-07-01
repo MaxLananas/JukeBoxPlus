@@ -2,73 +2,61 @@ package com.example.jukeboxplus.gui;
 
 import com.example.jukeboxplus.music.MusicDatabase;
 import com.example.jukeboxplus.music.MusicInfo;
-import com.example.jukeboxplus.music.MusicInfo.MusicType;
 import com.example.jukeboxplus.music.MusicPlayer;
 import com.example.jukeboxplus.music.MusicTracker;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.sounds.SoundManager;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MusicPlayerScreen extends Screen {
 
+    private static final String[] CATEGORIES = {"All", "Discs", "Ambient", "Nether", "End"};
+    private static final int MAX_VISIBLE = 10;
+    private static final int PANEL_W = 480;
+    private static final int PANEL_H = 540;
+
     private final MusicPlayer player;
     private final MusicTracker tracker;
+    private final List<MusicInfo> displayedMusic = new ArrayList<>();
 
-    private static final String[] CATEGORIES = {"All", "Discs", "Ambient", "Nether", "End"};
     private int selectedCategory = 0;
-
-    private List<MusicInfo> displayedMusic = new ArrayList<>();
     private int scrollOffset = 0;
-    private static final int MAX_VISIBLE = 8;
-
-    private int hoveredIndex = -1;
-    private long openTime;
-
-    private static final int PANEL_COLOR    = 0xFF1E1E1E;
-    private static final int CARD_COLOR     = 0xFF2A2A2A;
-    private static final int CARD_HOVER     = 0xFF333333;
-    private static final int CARD_PLAYING   = 0xFF1A3A1A;
-    private static final int ACCENT_COLOR   = 0xFF1DB954;
-    private static final int TEXT_PRIMARY   = 0xFFFFFFFF;
-    private static final int TEXT_SECONDARY = 0xFFB3B3B3;
-    private static final int TEXT_MUTED     = 0xFF535353;
-    private static final int DANGER_COLOR   = 0xFFE74C3C;
-
-    private int panelX, panelY, panelW, panelH;
-
-    private int prevBtnX, prevBtnY;
-    private int playBtnX, playBtnY;
-    private int nextBtnX, nextBtnY;
-    private int closeBtnX, closeBtnY;
-    private int shuffleBtnX, shuffleBtnY;
-    private int repeatBtnX, repeatBtnY;
-
-    private static final int BTN_SIZE = 20;
+    private boolean needsRebuild = true;
+    private int panelX, panelY;
 
     public MusicPlayerScreen(MusicPlayer player, MusicTracker tracker) {
-        super(Text.literal("Music Player"));
-        this.player   = player;
-        this.tracker  = tracker;
-        this.openTime = System.currentTimeMillis();
-        loadMusicList();
+        super(Component.literal("Music Player"));
+        this.player = player;
+        this.tracker = tracker;
+    }
+
+    @Override
+    protected void init() {
+        panelX = (width - PANEL_W) / 2;
+        panelY = (height - PANEL_H) / 2;
+        needsRebuild = true;
+    }
+
+    @Override
+    public void tick() {
+        if (needsRebuild) { needsRebuild = false; rebuildUI(); }
     }
 
     private void loadMusicList() {
-        List<MusicInfo> all = MusicDatabase.getAllMusic();
-        displayedMusic = new ArrayList<>();
-        for (MusicInfo m : all) {
+        displayedMusic.clear();
+        for (MusicInfo m : MusicDatabase.getAllMusic()) {
             boolean include = switch (selectedCategory) {
-                case 1  -> m.getType() == MusicType.DISC;
-                case 2  -> m.getType() == MusicType.AMBIENT || m.getType() == MusicType.CREATIVE;
-                case 3  -> m.getType() == MusicType.NETHER;
-                case 4  -> m.getType() == MusicType.END;
+                case 1 -> m.getType() == MusicInfo.MusicType.DISC;
+                case 2 -> m.getType() == MusicInfo.MusicType.AMBIENT || m.getType() == MusicInfo.MusicType.CREATIVE;
+                case 3 -> m.getType() == MusicInfo.MusicType.NETHER;
+                case 4 -> m.getType() == MusicInfo.MusicType.END;
                 default -> true;
             };
             if (include) displayedMusic.add(m);
@@ -76,421 +64,242 @@ public class MusicPlayerScreen extends Screen {
         scrollOffset = 0;
     }
 
-    @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        float elapsed = (System.currentTimeMillis() - openTime) / 1000f;
-        float ease    = easeOutBack(Math.min(elapsed * 3f, 1f));
+    private void rebuildUI() {
+        clearWidgets();
+        loadMusicList();
 
-        panelW = Math.min(480, width  - 40);
-        panelH = Math.min(580, height - 40);
-        panelX = (width  - panelW) / 2;
-        panelY = (int) ((height - panelH) / 2 + (1f - ease) * 30);
+        int pad = 12;
+        int closeX = panelX + PANEL_W - 28;
+        int closeY = panelY + 6;
+        addRenderableWidget(new MusicButton(closeX, closeY, 22, 22, "X",
+                () -> { if (minecraft != null) minecraft.setScreen(null); },
+                0xFF3A1A1A, 0xFF5A2020, 0xFFE74C3C, 0xFFFFFFFF));
 
-        context.fill(0, 0, width, height, 0xCC000000);
-        drawRoundedRect(context, panelX, panelY, panelW, panelH, PANEL_COLOR);
-        drawRoundedRect(context, panelX - 2, panelY - 2, panelW + 4, panelH + 4,
-                withAlpha(0xFF000000, 80));
+        int controlY = panelY + 120;
+        int btnSize = 28;
+        int gap = 8;
+        int totalW = btnSize * 3 + gap * 2;
+        int startX = panelX + (PANEL_W - totalW) / 2;
 
-        hoveredIndex = -1;
+        addRenderableWidget(new MusicButton(startX, controlY, btnSize, btnSize, "|<",
+                () -> { player.previous(); playClick(); }));
+        addRenderableWidget(new MusicButton(startX + btnSize + gap, controlY, btnSize, btnSize,
+                player.isPlaying() ? "||" : ">",
+                () -> {
+                    if (player.getCurrentMusic() == null && !displayedMusic.isEmpty()) player.play(displayedMusic.get(0));
+                    else player.togglePlayPause();
+                    playClick();
+                    needsRebuild = true;
+                },
+                0xFF1DB954, 0xFF1ED760, 0xFFFFFFFF, 0xFFFFFFFF));
+        addRenderableWidget(new MusicButton(startX + (btnSize + gap) * 2, controlY, btnSize, btnSize, ">|",
+                () -> { player.next(); playClick(); }));
 
-        renderHeader(context, mouseX, mouseY);
-        renderNowPlaying(context, mouseX, mouseY, delta);
-        renderCategories(context, mouseX, mouseY);
-        renderMusicList(context, mouseX, mouseY);
-        renderFooter(context, mouseX, mouseY);
+        int volY = controlY + btnSize + 8;
+        int volBtnW = 40;
+        int volStartX = panelX + PANEL_W / 2 - volBtnW - 4;
+        addRenderableWidget(new MusicButton(volStartX, volY, volBtnW, 16, "Vol-",
+                () -> { player.adjustVolume(-0.1f); playClick(); }));
+        addRenderableWidget(new MusicButton(volStartX + volBtnW + 8, volY, volBtnW, 16, "Vol+",
+                () -> { player.adjustVolume(0.1f); playClick(); }));
 
-        super.render(context, mouseX, mouseY, delta);
+        int catY = panelY + 180;
+        int catW = (PANEL_W - pad * 2 - 4 * 4) / 5;
+        for (int i = 0; i < CATEGORIES.length; i++) {
+            final int cat = i;
+            boolean sel = (i == selectedCategory);
+            addRenderableWidget(new MusicButton(
+                    panelX + pad + i * (catW + 4), catY, catW, 20, CATEGORIES[i],
+                    () -> { selectedCategory = cat; needsRebuild = true; playClick(); },
+                    sel ? 0xFF1DB954 : 0xFF282828,
+                    sel ? 0xFF1ED760 : 0xFF333333,
+                    sel ? 0xFFFFFFFF : 0xFFB3B3B3,
+                    0xFFFFFFFF));
+        }
+
+        int listY = panelY + 208;
+        int itemH = 26;
+        int listW = PANEL_W - pad * 2 - 8;
+        int start = scrollOffset;
+        int end = Math.min(displayedMusic.size(), scrollOffset + MAX_VISIBLE);
+
+        for (int i = start; i < end; i++) {
+            final MusicInfo music = displayedMusic.get(i);
+            int itemY = listY + (i - scrollOffset) * itemH;
+            boolean playing = player.getCurrentMusic() != null && player.getCurrentMusic().getId().equals(music.getId());
+            String label = music.getTitle() + " - " + music.getArtist();
+
+            addRenderableWidget(new MusicButton(panelX + pad, itemY, listW, itemH - 2, label,
+                    () -> { player.play(music); playClick(); },
+                    playing ? 0xFF1A3A1A : 0xFF1E1E1E,
+                    playing ? 0xFF1A4A1A : 0xFF333333,
+                    playing ? 0xFF1DB954 : 0xFFFFFFFF,
+                    0xFFFFFFFF));
+        }
+
+        int footerY = panelY + PANEL_H - 36;
+        addRenderableWidget(new MusicButton(panelX + pad, footerY, 50, 18,
+                player.isShuffle() ? "[S] ON" : "[S]",
+                () -> { player.toggleShuffle(); playClick(); needsRebuild = true; },
+                player.isShuffle() ? 0xFF1DB954 : 0xFF282828,
+                player.isShuffle() ? 0xFF1ED760 : 0xFF333333,
+                player.isShuffle() ? 0xFFFFFFFF : 0xFFB3B3B3,
+                0xFFFFFFFF));
+
+        addRenderableWidget(new MusicButton(panelX + pad + 56, footerY, 50, 18,
+                player.isRepeat() ? "[R] ON" : "[R]",
+                () -> { player.toggleRepeat(); playClick(); needsRebuild = true; },
+                player.isRepeat() ? 0xFF1DB954 : 0xFF282828,
+                player.isRepeat() ? 0xFF1ED760 : 0xFF333333,
+                player.isRepeat() ? 0xFFFFFFFF : 0xFFB3B3B3,
+                0xFFFFFFFF));
     }
 
-    private void renderHeader(DrawContext context, int mouseX, int mouseY) {
-        int headerH = 36;
-        drawRoundedRect(context, panelX, panelY, panelW, headerH,
-                darkenColor(PANEL_COLOR, 0.5f));
+    @Override
+    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        g.fill(0, 0, width, height, 0xCC000000);
+
+        g.fill(panelX - 2, panelY - 2, panelX + PANEL_W + 2, panelY + PANEL_H + 2, 0xFF1DB954);
+        g.fill(panelX, panelY, panelX + PANEL_W, panelY + PANEL_H, 0xFF121212);
+        drawBorder(g, panelX, panelY, PANEL_W, PANEL_H, 0xFF3E3E3E);
+        g.fill(panelX + 1, panelY, panelX + PANEL_W - 1, panelY + 2, 0xFF1DB954);
+
+        Font f = font;
+        int pad = 12;
 
         float bounce = (float) Math.sin(System.currentTimeMillis() / 800.0) * 1.5f;
-        String title = "# MUSIC PLAYER #";
-        int tw = textRenderer.getWidth(title);
-        context.drawTextWithShadow(textRenderer, Text.literal(title),
-                panelX + panelW / 2 - tw / 2,
-                (int) (panelY + 10 + bounce),
-                ACCENT_COLOR);
+        String title = "♫ MUSIC PLAYER";
+        int tw = f.width(title);
+        g.drawCenteredString(f, Component.literal(title), panelX + PANEL_W / 2, (int)(panelY + 10 + bounce), 0xFF1DB954);
 
-        closeBtnX = panelX + panelW - BTN_SIZE - 6;
-        closeBtnY = panelY + 8;
-        boolean hoverClose = isInBounds(mouseX, mouseY, closeBtnX, closeBtnY, BTN_SIZE, BTN_SIZE);
-        drawRoundedRect(context, closeBtnX, closeBtnY, BTN_SIZE, BTN_SIZE,
-                hoverClose ? DANGER_COLOR : CARD_COLOR);
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal("X"),
-                closeBtnX + BTN_SIZE / 2, closeBtnY + 6, TEXT_PRIMARY);
-    }
-
-    private void renderNowPlaying(DrawContext context, int mouseX, int mouseY, float delta) {
-        int sectionY = panelY + 40;
-        int sectionH = 130;
-        drawRoundedRect(context, panelX + 6, sectionY, panelW - 12, sectionH, CARD_COLOR);
+        int npY = panelY + 36;
+        int npH = 80;
+        g.fill(panelX + pad, npY, panelX + PANEL_W - pad, npY + npH, 0xFF1E1E1E);
+        drawBorder(g, panelX + pad, npY, PANEL_W - pad * 2, npH, 0xFF3E3E3E);
 
         MusicInfo current = player.getCurrentMusic();
 
         if (current == null) {
-            context.drawCenteredTextWithShadow(textRenderer,
-                    Text.literal("No music playing"),
-                    panelX + panelW / 2, sectionY + sectionH / 2 - 4, TEXT_MUTED);
-            renderPlaybackControls(context, mouseX, mouseY, sectionY + sectionH - 28);
-            return;
-        }
-
-        int discX = panelX + 18;
-        int discY = sectionY + 10;
-        int discR  = 28;
-        int color  = current.getDiscColor();
-
-        for (int r = discR; r > 0; r--) {
-            float ratio = (float) r / discR;
-            int c = withAlpha(darkenColor(color, ratio * 0.8f), (int)(ratio * 200));
-            fillCircle(context, discX + discR, discY + discR, r, c);
-        }
-
-        if (player.isPlaying()) {
-            double angle = (System.currentTimeMillis() / 800.0) % (Math.PI * 2);
-            int holeX = (int)(discX + discR + Math.cos(angle) * 8);
-            int holeY = (int)(discY + discR + Math.sin(angle) * 8);
-            fillCircle(context, holeX, holeY, 5, 0xFF000000);
+            g.drawCenteredString(f, Component.literal("§7No music playing"),
+                    panelX + PANEL_W / 2, npY + npH / 2 - 4, 0xFF535353);
         } else {
-            fillCircle(context, discX + discR, discY + discR, 5, 0xFF000000);
-        }
+            int discX = panelX + pad + 20;
+            int discY = npY + 20;
+            int discR = 24;
+            int color = current.getDiscColor() | 0xFF000000;
+            fillCircle(g, discX, discY, discR, color);
+            fillCircle(g, discX, discY, discR * 2 / 3, darken(color, 0.3f));
+            fillCircle(g, discX, discY, 5, 0xFF151515);
+            fillCircle(g, discX, discY, 2, color);
 
-        int infoX = discX + discR * 2 + 12;
-        int infoY = sectionY + 10;
-
-        String statusSymbol = player.isPlaying() ? "~" : "II";
-        context.drawTextWithShadow(textRenderer, Text.literal(statusSymbol),
-                infoX, infoY, ACCENT_COLOR);
-
-        String titleStr = current.getTitle();
-        if (titleStr.length() > 22) titleStr = titleStr.substring(0, 19) + "...";
-        context.drawTextWithShadow(textRenderer, Text.literal(titleStr),
-                infoX + 14, infoY, TEXT_PRIMARY);
-
-        String artist = current.getArtist();
-        if (artist.length() > 26) artist = artist.substring(0, 23) + "...";
-        context.drawTextWithShadow(textRenderer, Text.literal(artist),
-                infoX, infoY + 12, TEXT_SECONDARY);
-
-        String typeTag = "[" + current.getType().displayName + "]";
-        context.drawTextWithShadow(textRenderer, Text.literal(typeTag),
-                infoX, infoY + 24, TEXT_MUTED);
-
-        int barY  = sectionY + sectionH - 42;
-        int barX  = panelX + 10;
-        int barW  = panelW - 20;
-        int barH  = 4;
-        float progress = current.getProgress();
-
-        context.fill(barX, barY, barX + barW, barY + barH, TEXT_MUTED);
-        context.fill(barX, barY, barX + (int)(barW * progress), barY + barH, ACCENT_COLOR);
-        fillCircle(context, barX + (int)(barW * progress), barY + barH / 2, 4, ACCENT_COLOR);
-
-        String elapsedStr = formatTime(current.getElapsedSeconds());
-        String totalStr   = formatTime(current.getDurationSeconds());
-        context.drawTextWithShadow(textRenderer, Text.literal(elapsedStr),
-                barX, barY + 8, TEXT_MUTED);
-        int totalW = textRenderer.getWidth(totalStr);
-        context.drawTextWithShadow(textRenderer, Text.literal(totalStr),
-                barX + barW - totalW, barY + 8, TEXT_MUTED);
-
-        renderPlaybackControls(context, mouseX, mouseY, sectionY + sectionH - 22);
-        renderVolumeControl(context, mouseX, mouseY, sectionY + sectionH - 10);
-    }
-
-    private void renderPlaybackControls(DrawContext context, int mouseX, int mouseY, int y) {
-        int centerX = panelX + panelW / 2;
-        int spacing = 28;
-
-        prevBtnX = centerX - spacing - BTN_SIZE / 2;
-        prevBtnY = y - BTN_SIZE / 2;
-        playBtnX = centerX - BTN_SIZE / 2;
-        playBtnY = y - BTN_SIZE / 2;
-        nextBtnX = centerX + spacing - BTN_SIZE / 2;
-        nextBtnY = y - BTN_SIZE / 2;
-
-        boolean hPrev = isInBounds(mouseX, mouseY, prevBtnX, prevBtnY, BTN_SIZE, BTN_SIZE);
-        boolean hPlay = isInBounds(mouseX, mouseY, playBtnX, playBtnY, BTN_SIZE, BTN_SIZE);
-        boolean hNext = isInBounds(mouseX, mouseY, nextBtnX, nextBtnY, BTN_SIZE, BTN_SIZE);
-
-        drawRoundedRect(context, prevBtnX, prevBtnY, BTN_SIZE, BTN_SIZE,
-                hPrev ? CARD_HOVER : CARD_COLOR);
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal("|<"),
-                prevBtnX + BTN_SIZE / 2, prevBtnY + 6, TEXT_PRIMARY);
-
-        drawRoundedRect(context, playBtnX, playBtnY, BTN_SIZE, BTN_SIZE,
-                hPlay ? darkenColor(ACCENT_COLOR, 0.7f) : ACCENT_COLOR);
-        context.drawCenteredTextWithShadow(textRenderer,
-                Text.literal(player.isPlaying() ? "II" : ">"),
-                playBtnX + BTN_SIZE / 2, playBtnY + 6, TEXT_PRIMARY);
-
-        drawRoundedRect(context, nextBtnX, nextBtnY, BTN_SIZE, BTN_SIZE,
-                hNext ? CARD_HOVER : CARD_COLOR);
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal(">|"),
-                nextBtnX + BTN_SIZE / 2, nextBtnY + 6, TEXT_PRIMARY);
-    }
-
-    private void renderVolumeControl(DrawContext context, int mouseX, int mouseY, int y) {
-        int barX = panelX + 10;
-        int barW = panelW - 20;
-        int barH = 3;
-        float vol = player.getVolume();
-
-        context.fill(barX, y, barX + barW, y + barH, TEXT_MUTED);
-        context.fill(barX, y, barX + (int)(barW * vol), y + barH, ACCENT_COLOR);
-
-        String volStr = (int)(vol * 100) + "%";
-        context.drawTextWithShadow(textRenderer, Text.literal("Vol: " + volStr),
-                barX, y + 6, TEXT_MUTED);
-    }
-
-    private void renderCategories(DrawContext context, int mouseX, int mouseY) {
-        int catY = panelY + 178;
-        int catH = 22;
-        int tabW = (panelW - 12) / CATEGORIES.length;
-
-        for (int i = 0; i < CATEGORIES.length; i++) {
-            int tabX    = panelX + 6 + i * tabW;
-            boolean sel   = (i == selectedCategory);
-            boolean hover = isInBounds(mouseX, mouseY, tabX, catY, tabW - 2, catH);
-
-            int bgColor = sel ? ACCENT_COLOR : (hover ? CARD_HOVER : CARD_COLOR);
-            drawRoundedRect(context, tabX, catY, tabW - 2, catH, bgColor);
-
-            int tw = textRenderer.getWidth(CATEGORIES[i]);
-            context.drawTextWithShadow(textRenderer, Text.literal(CATEGORIES[i]),
-                    tabX + (tabW - 2) / 2 - tw / 2, catY + 7,
-                    sel ? TEXT_PRIMARY : TEXT_SECONDARY);
-        }
-    }
-
-    private void renderMusicList(DrawContext context, int mouseX, int mouseY) {
-        int listY  = panelY + 204;
-        int listH  = panelH - 204 - 36;
-        int itemH  = 24;
-
-        drawRoundedRect(context, panelX + 6, listY, panelW - 12, listH,
-                darkenColor(PANEL_COLOR, 0.6f));
-
-        int visible = Math.min(MAX_VISIBLE, displayedMusic.size() - scrollOffset);
-
-        for (int i = 0; i < visible; i++) {
-            int idx     = i + scrollOffset;
-            MusicInfo m = displayedMusic.get(idx);
-            int itemY   = listY + i * itemH;
-
-            boolean hover   = isInBounds(mouseX, mouseY, panelX + 8, itemY, panelW - 16, itemH);
-            boolean playing = player.getCurrentMusic() == m;
-
-            if (hover) hoveredIndex = idx;
-
-            int bg = playing ? CARD_PLAYING : (hover ? CARD_HOVER : 0x00000000);
-            if (bg != 0x00000000)
-                context.fill(panelX + 8, itemY, panelX + panelW - 8, itemY + itemH, bg);
-
-            fillCircle(context, panelX + 18, itemY + itemH / 2, 6, m.getDiscColor());
-
-            if (playing) {
-                context.drawTextWithShadow(textRenderer, Text.literal(">"),
-                        panelX + 10, itemY + 8, ACCENT_COLOR);
+            if (player.isPlaying()) {
+                double angle = (System.currentTimeMillis() / 800.0) % (Math.PI * 2);
+                fillCircle(g, (int)(discX + Math.cos(angle) * 8), (int)(discY + Math.sin(angle) * 8), 4, 0xFF000000);
             }
 
-            String t = m.getTitle();
-            if (t.length() > 20) t = t.substring(0, 17) + "...";
-            context.drawTextWithShadow(textRenderer, Text.literal(t),
-                    panelX + 28, itemY + 4, playing ? ACCENT_COLOR : TEXT_PRIMARY);
+            int infoX = discX + discR + 16;
+            g.drawString(f, Component.literal(player.isPlaying() ? "~" : "||"), infoX, npY + 8, 0xFF1DB954, false);
+            String songTitle = current.getTitle();
+            if (f.width(songTitle) > PANEL_W - 120) songTitle = songTitle.substring(0, 20) + "...";
+            g.drawString(f, Component.literal(songTitle), infoX + 14, npY + 8, 0xFFFFFFFF, true);
+            g.drawString(f, Component.literal(current.getArtist()), infoX, npY + 20, 0xFFB3B3B3, true);
+            g.drawString(f, Component.literal("[" + current.getType().displayName + "]"), infoX, npY + 32, 0xFF535353, false);
 
-            String a = m.getArtist();
-            if (a.length() > 18) a = a.substring(0, 15) + "...";
-            context.drawTextWithShadow(textRenderer, Text.literal(a),
-                    panelX + 28, itemY + 14, TEXT_SECONDARY);
+            int barY = npY + npH - 20;
+            int barX = panelX + pad + 4;
+            int barW = PANEL_W - pad * 2 - 8;
+            float progress = current.getProgress();
+            g.fill(barX, barY, barX + barW, barY + 3, 0xFF404040);
+            g.fill(barX, barY, barX + (int)(barW * progress), barY + 3, 0xFF1DB954);
+            fillCircle(g, barX + (int)(barW * progress), barY + 1, 3, 0xFF1DB954);
+            String time = current.getFormattedTime() + " / " + current.getFormattedDuration();
+            g.drawCenteredString(f, Component.literal("§8" + time), panelX + PANEL_W / 2, barY + 6, 0xFF535353);
+        }
 
-            String dur  = formatTime(m.getDurationSeconds());
-            int durW    = textRenderer.getWidth(dur);
-            context.drawTextWithShadow(textRenderer, Text.literal(dur),
-                    panelX + panelW - durW - 12, itemY + 8, TEXT_MUTED);
+        g.fill(panelX + pad, npY + npH + 4, panelX + PANEL_W - pad, npY + npH + 5, 0xFF3E3E3E);
+
+        int volY = panelY + 156;
+        float vol = player.getVolume();
+        int volBarX = panelX + PANEL_W / 2 - 60;
+        int volBarW = 120;
+        g.fill(volBarX, volY, volBarX + volBarW, volY + 3, 0xFF404040);
+        g.fill(volBarX, volY, volBarX + (int)(volBarW * vol), volY + 3, 0xFF1DB954);
+        String volStr = "Vol: " + (int)(vol * 100) + "%";
+        g.drawCenteredString(f, Component.literal("§8" + volStr), panelX + PANEL_W / 2, volY + 6, 0xFF535353);
+
+        int catY = panelY + 180;
+        g.fill(panelX + pad, catY + 22, panelX + PANEL_W - pad, catY + 23, 0xFF3E3E3E);
+
+        int listY = panelY + 208;
+        int listH = MAX_VISIBLE * 26;
+        g.fill(panelX + pad, listY, panelX + PANEL_W - pad, listY + listH, 0xFF1E1E1E);
+        drawBorder(g, panelX + pad, listY, PANEL_W - pad * 2, listH, 0xFF2E2E2E);
+
+        super.render(g, mouseX, mouseY, delta);
+
+        int listW = PANEL_W - pad * 2 - 8;
+        int start = scrollOffset;
+        int end = Math.min(displayedMusic.size(), scrollOffset + MAX_VISIBLE);
+        for (int i = start; i < end; i++) {
+            MusicInfo m = displayedMusic.get(i);
+            int itemY = listY + (i - start) * 26;
+            fillCircle(g, panelX + pad + 10, itemY + 11, 5, m.getDiscColor() | 0xFF000000);
+            String dur = m.getFormattedDuration();
+            g.drawString(f, Component.literal("§8" + dur), panelX + pad + listW - f.width(dur) - 4, itemY + 5, 0xFF535353, false);
         }
 
         if (displayedMusic.size() > MAX_VISIBLE) {
-            int scrollBarH = listH;
-            int thumbH     = Math.max(20, scrollBarH * MAX_VISIBLE / displayedMusic.size());
-            int thumbY     = listY + scrollOffset * (scrollBarH - thumbH)
-                             / Math.max(1, displayedMusic.size() - MAX_VISIBLE);
-            int scrollBarX = panelX + panelW - 10;
-
-            context.fill(scrollBarX, listY, scrollBarX + 4, listY + scrollBarH, CARD_COLOR);
-            context.fill(scrollBarX, thumbY, scrollBarX + 4, thumbY + thumbH, TEXT_SECONDARY);
+            int sbX = panelX + PANEL_W - pad - 6;
+            int sbH = listH;
+            int thumbH = Math.max(20, sbH * MAX_VISIBLE / displayedMusic.size());
+            int thumbY = listY + scrollOffset * (sbH - thumbH) / Math.max(1, displayedMusic.size() - MAX_VISIBLE);
+            g.fill(sbX, listY, sbX + 4, listY + sbH, 0xFF282828);
+            g.fill(sbX, thumbY, sbX + 4, thumbY + thumbH, 0xFFB3B3B3);
         }
-    }
 
-    private void renderFooter(DrawContext context, int mouseX, int mouseY) {
-        int footerY = panelY + panelH - 32;
-        drawRoundedRect(context, panelX, footerY, panelW, 32,
-                darkenColor(PANEL_COLOR, 0.5f));
-
-        shuffleBtnX = panelX + 10;
-        shuffleBtnY = footerY + 6;
-        boolean hShuffle  = isInBounds(mouseX, mouseY, shuffleBtnX, shuffleBtnY, 40, 18);
-        boolean shuffleOn = player.isShuffle();
-        drawRoundedRect(context, shuffleBtnX, shuffleBtnY, 40, 18,
-                shuffleOn ? ACCENT_COLOR : (hShuffle ? CARD_HOVER : CARD_COLOR));
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal("[S]"),
-                shuffleBtnX + 20, shuffleBtnY + 5,
-                shuffleOn ? TEXT_PRIMARY : TEXT_SECONDARY);
-
-        repeatBtnX = panelX + 58;
-        repeatBtnY = footerY + 6;
-        boolean hRepeat  = isInBounds(mouseX, mouseY, repeatBtnX, repeatBtnY, 40, 18);
-        boolean repeatOn = player.isRepeat();
-        drawRoundedRect(context, repeatBtnX, repeatBtnY, 40, 18,
-                repeatOn ? ACCENT_COLOR : (hRepeat ? CARD_HOVER : CARD_COLOR));
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal("[R]"),
-                repeatBtnX + 20, repeatBtnY + 5,
-                repeatOn ? TEXT_PRIMARY : TEXT_SECONDARY);
-
+        int footerY = panelY + PANEL_H - 36;
+        g.fill(panelX, footerY, panelX + PANEL_W, footerY + 1, 0xFF3E3E3E);
         String credit = "Made by maxlananas";
-        int creditW   = textRenderer.getWidth(credit);
-        context.drawTextWithShadow(textRenderer, Text.literal(credit),
-                panelX + panelW - creditW - 8, footerY + 10, TEXT_MUTED);
-    }
-
-    // PAS de @Override - gestion manuelle des clics via handleClick()
-    // appelé depuis init() via un listener
-    private void handleClick(double mouseX, double mouseY, int button) {
-        int mx = (int) mouseX;
-        int my = (int) mouseY;
-
-        if (isInBounds(mx, my, closeBtnX, closeBtnY, BTN_SIZE, BTN_SIZE)) {
-            playClickSound(); close(); return;
-        }
-        if (isInBounds(mx, my, prevBtnX, prevBtnY, BTN_SIZE, BTN_SIZE)) {
-            playClickSound(); player.previous(); return;
-        }
-        if (isInBounds(mx, my, playBtnX, playBtnY, BTN_SIZE, BTN_SIZE)) {
-            playClickSound();
-            if (player.getCurrentMusic() == null && !displayedMusic.isEmpty()) {
-                player.play(displayedMusic.get(0));
-            } else {
-                player.togglePlayPause();
-            }
-            return;
-        }
-        if (isInBounds(mx, my, nextBtnX, nextBtnY, BTN_SIZE, BTN_SIZE)) {
-            playClickSound(); player.next(); return;
-        }
-        if (isInBounds(mx, my, shuffleBtnX, shuffleBtnY, 40, 18)) {
-            playClickSound(); player.toggleShuffle(); return;
-        }
-        if (isInBounds(mx, my, repeatBtnX, repeatBtnY, 40, 18)) {
-            playClickSound(); player.toggleRepeat(); return;
-        }
-
-        int tabW = (panelW - 12) / CATEGORIES.length;
-        int catY = panelY + 178;
-        for (int i = 0; i < CATEGORIES.length; i++) {
-            int tabX = panelX + 6 + i * tabW;
-            if (isInBounds(mx, my, tabX, catY, tabW - 2, 22)) {
-                playClickSound();
-                selectedCategory = i;
-                loadMusicList();
-                return;
-            }
-        }
-
-        int listY   = panelY + 204;
-        int itemH   = 24;
-        int visible = Math.min(MAX_VISIBLE, displayedMusic.size() - scrollOffset);
-        for (int i = 0; i < visible; i++) {
-            int idx   = i + scrollOffset;
-            int itemY = listY + i * itemH;
-            if (isInBounds(mx, my, panelX + 8, itemY, panelW - 16, itemH)) {
-                playClickSound();
-                player.play(displayedMusic.get(idx));
-                return;
-            }
-        }
+        g.drawString(f, Component.literal("§8" + credit), panelX + PANEL_W - f.width(credit) - pad, footerY + 6, 0xFF535353, false);
     }
 
     @Override
-    public void init() {
-        super.init();
-    }
-
-    // Scroll : signature stable entre versions
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY,
-                                 double horizontalAmount, double verticalAmount) {
-        int maxScroll = Math.max(0, displayedMusic.size() - MAX_VISIBLE);
-        scrollOffset  = MathHelper.clamp(scrollOffset - (int) verticalAmount, 0, maxScroll);
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (displayedMusic.size() <= MAX_VISIBLE) return false;
+        int maxScroll = displayedMusic.size() - MAX_VISIBLE;
+        int newOffset = Math.max(0, Math.min(maxScroll, scrollOffset - (int) Math.signum(verticalAmount)));
+        if (newOffset != scrollOffset) { scrollOffset = newOffset; needsRebuild = true; }
         return true;
     }
 
-    // Gestion de la touche Escape via shouldCloseOnEsc
-    @Override
-    public boolean shouldCloseOnEsc() {
-        return true;
+    private void drawBorder(GuiGraphics g, int x, int y, int w, int h, int c) {
+        g.fill(x, y, x + w, y + 1, c);
+        g.fill(x, y + h - 1, x + w, y + h, c);
+        g.fill(x, y, x + 1, y + h, c);
+        g.fill(x + w - 1, y, x + w, y + h, c);
     }
 
-    @Override
-    public boolean shouldPause() {
-        return false;
+    private void fillCircle(GuiGraphics g, int cx, int cy, int r, int color) {
+        for (int dy = -r; dy <= r; dy++)
+            for (int dx = -r; dx <= r; dx++)
+                if (dx * dx + dy * dy <= r * r) g.fill(cx + dx, cy + dy, cx + dx + 1, cy + dy + 1, color);
     }
 
-    // Point d'entrée unifié pour les clics souris - compatible toutes versions
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        handleClick(mouseX, mouseY, button);
-        return true;
-    }
-
-    private void playClickSound() {
-        MinecraftClient.getInstance().getSoundManager().play(
-                PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0f));
-    }
-
-    private boolean isInBounds(int mx, int my, int x, int y, int w, int h) {
-        return mx >= x && mx <= x + w && my >= y && my <= y + h;
-    }
-
-    private void drawRoundedRect(DrawContext context, int x, int y, int w, int h, int color) {
-        context.fill(x + 2, y,     x + w - 2, y + h,     color);
-        context.fill(x,     y + 2, x + w,     y + h - 2, color);
-    }
-
-    private void fillCircle(DrawContext context, int cx, int cy, int r, int color) {
-        for (int dy = -r; dy <= r; dy++) {
-            for (int dx = -r; dx <= r; dx++) {
-                if (dx * dx + dy * dy <= r * r) {
-                    context.fill(cx + dx, cy + dy, cx + dx + 1, cy + dy + 1, color);
-                }
-            }
-        }
-    }
-
-    private int withAlpha(int color, int alpha) {
-        return (color & 0x00FFFFFF) | (MathHelper.clamp(alpha, 0, 255) << 24);
-    }
-
-    private int darkenColor(int color, float factor) {
+    private int darken(int color, float factor) {
         int r = (int)(((color >> 16) & 0xFF) * factor);
-        int g = (int)(((color >> 8)  & 0xFF) * factor);
-        int b = (int)(( color        & 0xFF) * factor);
-        return (color & 0xFF000000) | (r << 16) | (g << 8) | b;
+        int gr = (int)(((color >> 8) & 0xFF) * factor);
+        int b = (int)((color & 0xFF) * factor);
+        return (color & 0xFF000000) | (r << 16) | (gr << 8) | b;
     }
 
-    private float easeOutBack(float t) {
-        float c1 = 1.70158f;
-        float c3 = c1 + 1f;
-        return 1f + c3 * (float) Math.pow(t - 1, 3) + c1 * (float) Math.pow(t - 1, 2);
+    private void playClick() {
+        Minecraft.getInstance().getSoundManager().playSimple(
+                net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
     }
 
-    private String formatTime(int totalSeconds) {
-        int m = totalSeconds / 60;
-        int s = totalSeconds % 60;
-        return String.format("%02d:%02d", m, s);
-    }
+    @Override
+    public void onClose() { if (minecraft != null) minecraft.setScreen(null); }
+
+    @Override
+    public boolean isPauseScreen() { return false; }
 }
