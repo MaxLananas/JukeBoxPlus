@@ -3,7 +3,7 @@ package com.example.jukeboxplus.music;
 import com.example.jukeboxplus.JukeboxPlus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.client.sounds.SoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
@@ -43,9 +43,7 @@ public class MusicPlayer {
         stopMinecraftMusic();
         try {
             ResourceLocation soundId = parseSoundId(music.getId());
-            currentSound = new SimpleSoundInstance(soundId, SoundSource.RECORDS,
-                    getVolume(), 1.0f, RandomSource.create(), false, 0,
-                    SoundInstance.Attenuation.NONE, 0.0, 0.0, 0.0, true);
+            currentSound = SimpleSoundInstance.forUI(soundId, 1.0f, getVolume());
             client.getSoundManager().play(currentSound);
             currentMusic = music;
             currentMusic.setStartTime(System.currentTimeMillis());
@@ -98,9 +96,7 @@ public class MusicPlayer {
         if (!isPaused || currentMusic == null) return;
         try {
             ResourceLocation soundId = parseSoundId(currentMusic.getId());
-            currentSound = new SimpleSoundInstance(soundId, SoundSource.RECORDS,
-                    getVolume(), 1.0f, RandomSource.create(), false, 0,
-                    SoundInstance.Attenuation.NONE, 0.0, 0.0, 0.0, true);
+            currentSound = SimpleSoundInstance.forUI(soundId, 1.0f, getVolume());
             client.getSoundManager().play(currentSound);
             currentMusic.setStartTime(currentMusic.getStartTime() + (System.currentTimeMillis() - pausedAtTime));
             isPaused = false;
