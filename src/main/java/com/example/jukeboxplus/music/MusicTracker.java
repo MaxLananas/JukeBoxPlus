@@ -2,7 +2,7 @@ package com.example.jukeboxplus.music;
 
 import com.example.jukeboxplus.JukeboxPlus;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.sounds.SoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.SoundSource;
 
 import java.util.ArrayList;
@@ -33,11 +33,6 @@ public class MusicTracker {
         if (soundId.contains("calm") || soundId.contains("hal") || soundId.contains("creative") ||
                 soundId.contains("nether") || soundId.contains("end") || soundId.contains("credits") ||
                 soundId.contains("menu")) { handleMusicStart(soundId); }
-    }
-
-    public void onSoundStopped(SoundInstance sound) {
-        if (sound == null || currentMusic == null) return;
-        if (sound.getLocation().toString().toLowerCase().contains(currentMusic.getId().toLowerCase())) stopMusic();
     }
 
     private void handleMusicStart(String soundId) {
