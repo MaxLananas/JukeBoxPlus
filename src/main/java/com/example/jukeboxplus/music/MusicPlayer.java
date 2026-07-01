@@ -7,6 +7,7 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
+import net.minecraft.sounds.SoundEvent;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,7 +44,7 @@ public class MusicPlayer {
         stopMinecraftMusic();
         try {
             ResourceLocation soundId = parseSoundId(music.getId());
-            currentSound = SimpleSoundInstance.forUI(soundId, 1.0f, getVolume());
+            currentSound = SimpleSoundInstance.forUI(SoundEvent.createVariableRangeEvent(soundId), getVolume(), 1.0f);
             client.getSoundManager().play(currentSound);
             currentMusic = music;
             currentMusic.setStartTime(System.currentTimeMillis());
@@ -96,7 +97,7 @@ public class MusicPlayer {
         if (!isPaused || currentMusic == null) return;
         try {
             ResourceLocation soundId = parseSoundId(currentMusic.getId());
-            currentSound = SimpleSoundInstance.forUI(soundId, 1.0f, getVolume());
+            currentSound = SimpleSoundInstance.forUI(SoundEvent.createVariableRangeEvent(soundId), getVolume(), 1.0f);
             client.getSoundManager().play(currentSound);
             currentMusic.setStartTime(currentMusic.getStartTime() + (System.currentTimeMillis() - pausedAtTime));
             isPaused = false;
