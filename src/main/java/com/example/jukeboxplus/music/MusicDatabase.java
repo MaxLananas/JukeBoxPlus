@@ -1,19 +1,12 @@
 package com.example.jukeboxplus.music;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MusicDatabase {
-    
-    private static final Map<String, MusicInfo> MUSIC_DATA = new HashMap<>();
-    
+
+    private static final Map<String, MusicInfo> DATA = new HashMap<>();
+
     static {
-        // ═══════════════════════════════════════════
-        // MUSIC DISCS
-        // ═══════════════════════════════════════════
-        
         addDisc("music_disc.13", "13", "C418", 178, 0xBE7F2A);
         addDisc("music_disc.cat", "Cat", "C418", 185, 0x4EBF2A);
         addDisc("music_disc.blocks", "Blocks", "C418", 345, 0xD97F34);
@@ -33,11 +26,7 @@ public class MusicDatabase {
         addDisc("music_disc.creator", "Creator", "Lena Raine", 176, 0xD436C4);
         addDisc("music_disc.creator_music_box", "Creator (Music Box)", "Lena Raine", 73, 0xE8D4C4);
         addDisc("music_disc.precipice", "Precipice", "Aaron Cherof", 299, 0x364AD4);
-        
-        // ═══════════════════════════════════════════
-        // AMBIENT MUSIC
-        // ═════════════════════════��═══���═════════════
-        
+
         addAmbient("music.game", "Minecraft", "C418", 180, MusicInfo.MusicType.AMBIENT);
         addAmbient("music.creative", "Creative Mode", "C418", 180, MusicInfo.MusicType.CREATIVE);
         addAmbient("calm1", "Minecraft", "C418", 270, MusicInfo.MusicType.AMBIENT);
@@ -52,8 +41,6 @@ public class MusicDatabase {
         addAmbient("piano1", "Dry Hands", "C418", 60, MusicInfo.MusicType.AMBIENT);
         addAmbient("piano2", "Wet Hands", "C418", 90, MusicInfo.MusicType.AMBIENT);
         addAmbient("piano3", "Mice on Venus", "C418", 282, MusicInfo.MusicType.AMBIENT);
-        
-        // Nether
         addAmbient("nether1", "Concrete Halls", "C418", 240, MusicInfo.MusicType.NETHER);
         addAmbient("nether2", "Dead Voxel", "C418", 300, MusicInfo.MusicType.NETHER);
         addAmbient("nether3", "Warmth", "C418", 240, MusicInfo.MusicType.NETHER);
@@ -61,34 +48,24 @@ public class MusicDatabase {
         addAmbient("rubedo", "Rubedo", "Lena Raine", 300, MusicInfo.MusicType.NETHER);
         addAmbient("chrysopoeia", "Chrysopoeia", "Lena Raine", 300, MusicInfo.MusicType.NETHER);
         addAmbient("so_below", "So Below", "Lena Raine", 300, MusicInfo.MusicType.NETHER);
-        
-        // End
         addAmbient("end", "The End", "C418", 900, MusicInfo.MusicType.END);
         addAmbient("boss", "Boss", "C418", 360, MusicInfo.MusicType.END);
-        
-        // Credits
         addAmbient("credits", "Alpha", "C418", 600, MusicInfo.MusicType.CREDITS);
-        
-        // Menu
         addAmbient("menu1", "Mutation", "C418", 180, MusicInfo.MusicType.MENU);
         addAmbient("menu2", "Moog City 2", "C418", 180, MusicInfo.MusicType.MENU);
         addAmbient("menu3", "Beginning 2", "C418", 180, MusicInfo.MusicType.MENU);
         addAmbient("menu4", "Floating Trees", "C418", 180, MusicInfo.MusicType.MENU);
     }
-    
+
     private static void addDisc(String id, String title, String artist, int duration, int color) {
-        MUSIC_DATA.put(id.toLowerCase(), new MusicInfo(
-            id, title, artist, MusicInfo.MusicType.DISC, duration, color
-        ));
+        DATA.put(id.toLowerCase(), new MusicInfo(id, title, artist, MusicInfo.MusicType.DISC, duration, color));
     }
-    
+
     private static void addAmbient(String id, String title, String artist, int duration, MusicInfo.MusicType type) {
-        MUSIC_DATA.put(id.toLowerCase(), new MusicInfo(
-            id, title, artist, type, duration, getTypeColor(type)
-        ));
+        DATA.put(id.toLowerCase(), new MusicInfo(id, title, artist, type, duration, typeColor(type)));
     }
-    
-    private static int getTypeColor(MusicInfo.MusicType type) {
+
+    private static int typeColor(MusicInfo.MusicType type) {
         return switch (type) {
             case AMBIENT -> 0x4A90D9;
             case CREATIVE -> 0x7BD94A;
@@ -99,108 +76,61 @@ public class MusicDatabase {
             default -> 0xAAAAAA;
         };
     }
-    
+
     public static MusicInfo getByIdentifier(String id) {
         if (id == null) return null;
-        
-        String searchId = id.toLowerCase();
-        
-        // Recherche directe
-        if (MUSIC_DATA.containsKey(searchId)) {
-            return cloneWithNewStartTime(MUSIC_DATA.get(searchId));
-        }
-        
-        // Recherche partielle
-        for (Map.Entry<String, MusicInfo> entry : MUSIC_DATA.entrySet()) {
-            if (searchId.contains(entry.getKey()) || entry.getKey().contains(searchId)) {
-                return cloneWithNewStartTime(entry.getValue());
+        String search = id.toLowerCase();
+
+        if (DATA.containsKey(search)) return clone(DATA.get(search));
+
+        for (var entry : DATA.entrySet()) {
+            if (search.contains(entry.getKey()) || entry.getKey().contains(search)) {
+                return clone(entry.getValue());
             }
         }
-        
-        // Recherche par nom de fichier
-        String[] parts = searchId.split("[/:]");
+
+        String[] parts = search.split("[/:]");
         String filename = parts[parts.length - 1].replace(".ogg", "");
-        
-        for (Map.Entry<String, MusicInfo> entry : MUSIC_DATA.entrySet()) {
+        for (var entry : DATA.entrySet()) {
             if (entry.getKey().contains(filename) || filename.contains(entry.getKey())) {
-                return cloneWithNewStartTime(entry.getValue());
+                return clone(entry.getValue());
             }
         }
-        
         return null;
     }
-    
-    private static MusicInfo cloneWithNewStartTime(MusicInfo original) {
-        MusicInfo clone = new MusicInfo(
-            original.getId(),
-            original.getTitle(),
-            original.getArtist(),
-            original.getType(),
-            original.getDurationSeconds(),
-            original.getDiscColor()
-        );
-        clone.setStartTime(System.currentTimeMillis());
-        return clone;
+
+    private static MusicInfo clone(MusicInfo src) {
+        MusicInfo c = new MusicInfo(src.getId(), src.getTitle(), src.getArtist(), src.getType(), src.getDurationSeconds(), src.getDiscColor());
+        c.setStartTime(System.currentTimeMillis());
+        return c;
     }
-    
+
     public static MusicInfo createUnknown(String id) {
         String title = id;
-        if (id.contains("/")) {
-            title = id.substring(id.lastIndexOf('/') + 1);
-        }
-        if (id.contains(":")) {
-            title = id.substring(id.lastIndexOf(':') + 1);
-        }
+        if (id.contains("/")) title = id.substring(id.lastIndexOf('/') + 1);
+        if (id.contains(":")) title = id.substring(id.lastIndexOf(':') + 1);
         title = title.replace(".ogg", "").replace("_", " ");
-        title = capitalizeWords(title);
-        
-        return new MusicInfo(id, title, "Unknown", MusicInfo.MusicType.UNKNOWN, 180, 0x888888);
-    }
-    
-    private static String capitalizeWords(String str) {
-        StringBuilder result = new StringBuilder();
-        boolean capitalizeNext = true;
-        
-        for (char c : str.toCharArray()) {
-            if (Character.isWhitespace(c)) {
-                capitalizeNext = true;
-                result.append(c);
-            } else if (capitalizeNext) {
-                result.append(Character.toUpperCase(c));
-                capitalizeNext = false;
-            } else {
-                result.append(c);
-            }
+        StringBuilder sb = new StringBuilder();
+        boolean cap = true;
+        for (char c : title.toCharArray()) {
+            if (Character.isWhitespace(c)) { cap = true; sb.append(c); }
+            else if (cap) { sb.append(Character.toUpperCase(c)); cap = false; }
+            else sb.append(c);
         }
-        
-        return result.toString();
+        return new MusicInfo(id, sb.toString(), "Unknown", MusicInfo.MusicType.UNKNOWN, 180, 0x888888);
     }
-    
-    // ═══════════════════════════════════════════
-    // NOUVELLE MÉTHODE - Liste complète
-    // ═══════════════════════════════════════════
-    
+
     public static List<MusicInfo> getAllMusic() {
-        List<MusicInfo> allMusic = new ArrayList<>();
-        
-        for (Map.Entry<String, MusicInfo> entry : MUSIC_DATA.entrySet()) {
-            allMusic.add(new MusicInfo(
-                entry.getValue().getId(),
-                entry.getValue().getTitle(),
-                entry.getValue().getArtist(),
-                entry.getValue().getType(),
-                entry.getValue().getDurationSeconds(),
-                entry.getValue().getDiscColor()
-            ));
+        List<MusicInfo> all = new ArrayList<>();
+        for (var entry : DATA.entrySet()) {
+            all.add(new MusicInfo(entry.getValue().getId(), entry.getValue().getTitle(),
+                    entry.getValue().getArtist(), entry.getValue().getType(),
+                    entry.getValue().getDurationSeconds(), entry.getValue().getDiscColor()));
         }
-        
-        // Trier par type puis par titre
-        allMusic.sort((a, b) -> {
-            int typeCompare = a.getType().compareTo(b.getType());
-            if (typeCompare != 0) return typeCompare;
-            return a.getTitle().compareTo(b.getTitle());
+        all.sort((a, b) -> {
+            int tc = a.getType().compareTo(b.getType());
+            return tc != 0 ? tc : a.getTitle().compareTo(b.getTitle());
         });
-        
-        return allMusic;
+        return all;
     }
 }
