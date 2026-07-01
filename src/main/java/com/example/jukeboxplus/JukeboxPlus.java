@@ -5,13 +5,14 @@ import com.example.jukeboxplus.gui.MusicOverlay;
 import com.example.jukeboxplus.gui.MusicPlayerScreen;
 import com.example.jukeboxplus.music.MusicPlayer;
 import com.example.jukeboxplus.music.MusicTracker;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,86 +23,65 @@ public class JukeboxPlus implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static JukeboxPlus instance;
-
     private MusicTracker musicTracker;
-    private MusicPlayer  musicPlayer;
+    private MusicPlayer musicPlayer;
     private MusicOverlay musicOverlay;
 
-    private static KeyBinding toggleOverlayKey;
-    private static KeyBinding openPlayerKey;
-    private static KeyBinding toggleHistoryKey;
-    private static KeyBinding playPauseKey;
-    private static KeyBinding stopKey;
-    private static KeyBinding volumeUpKey;
-    private static KeyBinding volumeDownKey;
+    private static KeyMapping toggleOverlayKey;
+    private static KeyMapping openPlayerKey;
+    private static KeyMapping toggleHistoryKey;
+    private static KeyMapping playPauseKey;
+    private static KeyMapping stopKey;
+    private static KeyMapping volumeUpKey;
+    private static KeyMapping volumeDownKey;
 
     @Override
     public void onInitializeClient() {
         instance = this;
-        LOGGER.info("JukeboxPlus loading...");
-
         ModConfig.getInstance();
 
         musicTracker = new MusicTracker();
-        musicPlayer  = new MusicPlayer(musicTracker);
+        musicPlayer = new MusicPlayer(musicTracker);
         musicOverlay = new MusicOverlay(musicTracker, musicPlayer);
 
-        registerKeybindings();
+        KeyMapping.Category cat = new KeyMapping.Category(ResourceLocation.parse("jukeboxplus:category"));
+        toggleOverlayKey = bind("toggle", GLFW.GLFW_KEY_J, cat);
+        openPlayerKey = bind("player", GLFW.GLFW_KEY_M, cat);
+        toggleHistoryKey = bind("history", GLFW.GLFW_KEY_K, cat);
+        playPauseKey = bind("playpause", GLFW.GLFW_KEY_P, cat);
+        stopKey = bind("stop", GLFW.GLFW_KEY_O, cat);
+        volumeUpKey = bind("volume_up", GLFW.GLFW_KEY_PAGE_UP, cat);
+        volumeDownKey = bind("volume_down", GLFW.GLFW_KEY_PAGE_DOWN, cat);
 
-        HudRenderCallback.EVENT.register((context, tickCounter) ->
-                musicOverlay.render(context, tickCounter.getTickProgress(true)));
+        HudRenderCallback.EVENT.register((guiGraphics, deltaTracker) -> musicOverlay.render(guiGraphics));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.player != null) {
-                musicTracker.tick();
-                musicPlayer.tick();
-                handleKeybinds(client);
-            }
+            if (client.player == null) return;
+            musicTracker.tick();
+            musicPlayer.tick();
+            handleKeys(client);
         });
 
-        LOGGER.info("JukeboxPlus loaded!");
+        LOGGER.info("[JukeboxPlus] Initialized ✓");
     }
 
-    private void registerKeybindings() {
-        toggleOverlayKey = register("toggle",      GLFW.GLFW_KEY_J);
-        openPlayerKey    = register("player",      GLFW.GLFW_KEY_M);
-        toggleHistoryKey = register("history",     GLFW.GLFW_KEY_K);
-        playPauseKey     = register("playpause",   GLFW.GLFW_KEY_P);
-        stopKey          = register("stop",        GLFW.GLFW_KEY_O);
-        volumeUpKey      = register("volume_up",   GLFW.GLFW_KEY_PAGE_UP);
-        volumeDownKey    = register("volume_down", GLFW.GLFW_KEY_PAGE_DOWN);
+    private KeyMapping bind(String name, int key, KeyMapping.Category cat) {
+        return KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.jukeboxplus." + name, InputConstants.Type.KEYSYM, key, cat));
     }
 
-    private KeyBinding register(String name, int key) {
-        // Correction : utilisation de InputUtil.Type.KEYSYM
-        // pour éviter l'erreur "String cannot be converted to Category"
-        return KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.jukeboxplus." + name,
-                InputUtil.Type.KEYSYM,
-                key,
-                "key.jukeboxplus.category"
-        ));
+    private void handleKeys(Minecraft client) {
+        while (toggleOverlayKey.consumeClick()) musicOverlay.toggleVisibility();
+        while (openPlayerKey.consumeClick()) client.setScreen(new MusicPlayerScreen(musicPlayer, musicTracker));
+        while (toggleHistoryKey.consumeClick()) musicOverlay.toggleHistory();
+        while (playPauseKey.consumeClick()) musicPlayer.togglePlayPause();
+        while (stopKey.consumeClick()) musicPlayer.stop();
+        while (volumeUpKey.consumeClick()) musicPlayer.adjustVolume(0.1f);
+        while (volumeDownKey.consumeClick()) musicPlayer.adjustVolume(-0.1f);
     }
 
-    private void handleKeybinds(MinecraftClient client) {
-        while (toggleOverlayKey.wasPressed())
-            musicOverlay.toggleVisibility();
-        while (openPlayerKey.wasPressed())
-            client.setScreen(new MusicPlayerScreen(musicPlayer, musicTracker));
-        while (toggleHistoryKey.wasPressed())
-            musicOverlay.toggleHistory();
-        while (playPauseKey.wasPressed())
-            musicPlayer.togglePlayPause();
-        while (stopKey.wasPressed())
-            musicPlayer.stop();
-        while (volumeUpKey.wasPressed())
-            musicPlayer.adjustVolume(0.1f);
-        while (volumeDownKey.wasPressed())
-            musicPlayer.adjustVolume(-0.1f);
-    }
-
-    public static JukeboxPlus getInstance()  { return instance;     }
+    public static JukeboxPlus getInstance()  { return instance; }
     public MusicTracker getMusicTracker()     { return musicTracker; }
-    public MusicPlayer  getMusicPlayer()      { return musicPlayer;  }
+    public MusicPlayer getMusicPlayer()       { return musicPlayer; }
     public MusicOverlay getMusicOverlay()     { return musicOverlay; }
 }
