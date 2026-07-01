@@ -3,7 +3,7 @@
   "package": "com.example.jukeboxplus.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "SoundManagerMixin"
+    "SoundEngineMixin"
   ],
   "injectors": {
     "defaultRequire": 1
