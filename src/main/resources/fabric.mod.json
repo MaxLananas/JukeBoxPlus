@@ -10,21 +10,13 @@
   },
   "license": "MIT",
   "icon": "assets/jukeboxplus/icon.png",
-  
   "environment": "client",
-  
   "entrypoints": {
-    "client": [
-      "com.example.jukeboxplus.JukeboxPlus"
-    ]
+    "client": ["com.example.jukeboxplus.JukeboxPlus"]
   },
-  
-  "mixins": [
-    "jukeboxplus.mixins.json"
-  ],
-  
+  "mixins": ["jukeboxplus.mixins.json"],
   "depends": {
-    "fabricloader": ">=0.19.2",
+    "fabricloader": ">=0.19.3",
     "minecraft": "~1.21.10",
     "java": ">=21",
     "fabric-api": "*"
