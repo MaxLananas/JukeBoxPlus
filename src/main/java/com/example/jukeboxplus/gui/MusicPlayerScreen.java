@@ -7,10 +7,10 @@ import com.example.jukeboxplus.music.MusicTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.sounds.SoundManager;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -293,8 +293,8 @@ public class MusicPlayerScreen extends Screen {
     }
 
     private void playClick() {
-        Minecraft.getInstance().getSoundManager().playSimple(
-                net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
+        Minecraft.getInstance().getSoundManager().play(
+                SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
     }
 
     @Override
