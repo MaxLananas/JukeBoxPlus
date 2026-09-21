@@ -71,10 +71,8 @@ public abstract class BasePlayerScreen extends Screen {
         return ui.mouseClicked(mx, my, button);
     }
 
-    /** Drops keyboard focus from the search box (API differs on 1.19.x, overridden there). */
-    protected void unfocusSearch() {
-        if (search != null) search.setFocused(false);
-    }
+    /** Drops keyboard focus from the search box (EditBox#setFocused is version-specific). */
+    protected abstract void unfocusSearch();
 
     protected boolean releaseUi(double mx, double my, int button) {
         return ui.mouseReleased(mx, my, button);

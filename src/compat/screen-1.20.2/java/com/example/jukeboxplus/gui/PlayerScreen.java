@@ -22,6 +22,11 @@ public final class PlayerScreen extends BasePlayerScreen {
     }
 
     @Override
+    protected void unfocusSearch() {
+        if (search != null) search.setFocused(false);
+    }
+
+    @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (clickUi(mouseX, mouseY, button)) return true;
         return super.mouseClicked(mouseX, mouseY, button);
