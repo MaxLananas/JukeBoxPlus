@@ -1,6 +1,8 @@
 package com.example.jukeboxplus.music;
 
+import com.example.jukeboxplus.compat.Compat;
 import com.example.jukeboxplus.JukeboxPlus;
+import com.example.jukeboxplus.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.SoundSource;
@@ -8,87 +10,120 @@ import net.minecraft.sounds.SoundSource;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MusicTracker {
+/**
+ * Knows what music is currently audible, whether it was started by the player screen
+ * or by the game itself (biome music, jukeboxes, menu music), and keeps a history.
+ */
+public final class MusicTracker {
 
-    private MusicInfo currentMusic = null;
-    private final List<MusicInfo> history = new ArrayList<>();
-    private static final int MAX_HISTORY = 20;
-    private long lastMusicTime = 0;
-    private boolean isMusicPlaying = false;
+    public enum Source { PLAYER, GAME }
+
+    private static final int MAX_HISTORY = 50;
+
+    private final Minecraft minecraft;
+
+    private Track current;
+    private Source source;
+    private long startedAtMs;
+    /** The vanilla sound instance we are following, when {@link #source} is {@link Source#GAME}. */
+    private SoundInstance gameInstance;
+
+    public MusicTracker(Minecraft minecraft) {
+        this.minecraft = minecraft;
+    }
+
+    // ------------------------------------------------------------ player events
+
+    void onPlayerStarted(Track track) {
+        setCurrent(track, Source.PLAYER, null);
+    }
+
+    void onPlayerStopped() {
+        if (source == Source.PLAYER) clear();
+    }
+
+    // -------------------------------------------------------------- game events
+
+    /**
+     * Called from {@code SoundEngineMixin} after the sound engine accepted a sound.
+     * Runs on the render thread.
+     */
+    public void onSoundStarted(SoundInstance instance) {
+        if (instance == null || instance instanceof TrackSoundInstance) return;
+        SoundSource cat;
+        try {
+            cat = instance.getSource();
+        } catch (Throwable t) {
+            return;
+        }
+        if (cat != SoundSource.MUSIC && cat != SoundSource.RECORDS) return;
+        if (instance.getSound() == null) return;
+        String file = Compat.soundLocation(instance);
+        Track track = TrackDatabase.resolveOrUnknown(file);
+        // Our own playback wins over background music that might sneak in.
+        if (source == Source.PLAYER && current != null) return;
+        setCurrent(track, Source.GAME, instance);
+    }
+
+    private void setCurrent(Track track, Source src, SoundInstance instance) {
+        current = track;
+        source = src;
+        gameInstance = instance;
+        startedAtMs = System.currentTimeMillis();
+        addToHistory(track);
+        JukeboxPlus.LOGGER.debug("Now playing ({}): {}", src, track);
+    }
+
+    private void clear() {
+        current = null;
+        source = null;
+        gameInstance = null;
+    }
 
     public void tick() {
-        if (currentMusic != null && currentMusic.isFinished()) stopMusic();
-        if (isMusicPlaying && System.currentTimeMillis() - lastMusicTime > 5000) {
-            if (currentMusic != null && currentMusic.isFinished()) stopMusic();
+        if (source == Source.GAME && gameInstance != null) {
+            long elapsed = System.currentTimeMillis() - startedAtMs;
+            if (elapsed > 1500 && !minecraft.getSoundManager().isActive(gameInstance)) clear();
         }
     }
 
-    public void onSoundPlayed(SoundInstance sound) {
-        if (sound == null) return;
-        String soundId = sound.getLocation().toString();
-        SoundSource category = sound.getSource();
-
-        if (soundId.contains("music_disc") || category == SoundSource.RECORDS) { handleMusicStart(soundId); return; }
-        if (category == SoundSource.MUSIC || soundId.contains("music.")) { handleMusicStart(soundId); return; }
-        if (soundId.contains("calm") || soundId.contains("hal") || soundId.contains("creative") ||
-                soundId.contains("nether") || soundId.contains("end") || soundId.contains("credits") ||
-                soundId.contains("menu")) { handleMusicStart(soundId); }
+    public void onDisconnect() {
+        if (source == Source.GAME) clear();
     }
 
-    private void handleMusicStart(String soundId) {
-        MusicInfo info = MusicDatabase.getByIdentifier(soundId);
-        if (info == null) info = MusicDatabase.createUnknown(soundId);
-        if (currentMusic != null && currentMusic.getId().equals(info.getId()) &&
-                System.currentTimeMillis() - currentMusic.getStartTime() < 2000) return;
-        if (currentMusic != null) addToHistory(currentMusic);
-        currentMusic = info;
-        isMusicPlaying = true;
-        lastMusicTime = System.currentTimeMillis();
-        JukeboxPlus.LOGGER.info("Now playing: {} - {}", info.getTitle(), info.getArtist());
+    // ------------------------------------------------------------------ history
+
+    private void addToHistory(Track track) {
+        if (track == null) return;
+        ModConfig cfg = ModConfig.get();
+        List<String> h = cfg.history;
+        if (!h.isEmpty() && h.get(0).equals(track.getPath())) return;
+        h.remove(track.getPath());
+        h.add(0, track.getPath());
+        while (h.size() > MAX_HISTORY) h.remove(h.size() - 1);
+        cfg.save();
     }
 
-    private void stopMusic() {
-        if (currentMusic != null) addToHistory(currentMusic);
-        currentMusic = null;
-        isMusicPlaying = false;
-    }
-
-    private void addToHistory(MusicInfo music) {
-        if (!history.isEmpty() && history.get(0).getId().equals(music.getId())) return;
-        history.add(0, music);
-        while (history.size() > MAX_HISTORY) history.remove(history.size() - 1);
-    }
-
-    public void onMusicStarted(MusicInfo music) {
-        if (currentMusic != null) addToHistory(currentMusic);
-        this.currentMusic = music;
-        this.isMusicPlaying = true;
-        this.lastMusicTime = System.currentTimeMillis();
-    }
-
-    public void onMusicStopped(MusicInfo music) {
-        if (music != null) addToHistory(music);
-        if (currentMusic != null && music != null && currentMusic.getId().equals(music.getId())) {
-            currentMusic = null;
-            isMusicPlaying = false;
+    /** Most recent first. Unknown paths (from another Minecraft version) are skipped. */
+    public List<Track> getHistory() {
+        List<Track> out = new ArrayList<>();
+        for (String path : ModConfig.get().history) {
+            Track t = TrackDatabase.byPath(path);
+            if (t != null) out.add(t);
         }
+        return out;
     }
 
-    public MusicInfo getCurrentMusic()      { return currentMusic; }
-    public boolean isMusicPlaying()          { return isMusicPlaying && currentMusic != null; }
-    public List<MusicInfo> getHistory()      { return new ArrayList<>(history); }
-    public void clearHistory()               { history.clear(); }
-
-    public float getMusicVolume() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.options != null) return mc.options.getSoundSourceVolume(SoundSource.MUSIC);
-        return 1.0f;
+    public void clearHistory() {
+        ModConfig cfg = ModConfig.get();
+        cfg.history.clear();
+        cfg.save();
     }
 
-    public void setMusicVolume(float volume) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.options != null) {
-            mc.options.getSoundSourceOptionInstance(SoundSource.MUSIC).set((double) Math.max(0, Math.min(1, volume)));
-        }
-    }
+    // ------------------------------------------------------------------ getters
+
+    public Track getCurrent()   { return current; }
+    public Source getSource()   { return source; }
+    public boolean isPlaying()  { return current != null; }
+    public long elapsedMs()     { return current == null ? 0 : System.currentTimeMillis() - startedAtMs; }
 }

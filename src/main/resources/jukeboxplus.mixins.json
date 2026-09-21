@@ -1,9 +1,12 @@
 {
   "required": true,
+  "minVersion": "0.8",
   "package": "com.example.jukeboxplus.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "${mixin_java}",
   "client": [
-    "SoundEngineMixin"
+    "SoundEngineMixin",
+    "SoundManagerAccessor",
+    "SoundEngineAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

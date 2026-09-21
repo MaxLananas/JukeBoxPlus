@@ -1,101 +1,162 @@
-name: Build & Release
+name: build
 
 on:
   push:
-    branches: [ main, master ]
+    branches: ['**']
+    tags-ignore: ['**']
   pull_request:
-    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    name: Minecraft ${{ matrix.mc }}
     runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-
+    strategy:
+      fail-fast: false
+      matrix:
+        mc:
+          - '1.19.2'
+          - '1.19.4'
+          - '1.20.1'
+          - '1.20.4'
+          - '1.20.6'
+          - '1.21.1'
+          - '1.21.4'
+          - '1.21.5'
+          - '1.21.8'
+          - '1.21.10'
+          - '1.21.11'
+          - '26.1'
+          - '26.2'
+          - '26.3'
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v6
 
-      - name: Setup JDK 21
-        uses: actions/setup-java@v4
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      # One modern JDK builds every target: javac targets the game's Java level via --release.
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
         with:
-          java-version: '21'
+          java-version: '25'
           distribution: 'microsoft'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
         with:
-          gradle-version: '9.4.1'
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.gradle/loom-cache
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/gradle.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Build
-        run: gradle build --build-cache --parallel --configure-on-demand
-        env:
-          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
-
-      - name: Get mod version
-        id: version
+      - name: Build for Minecraft ${{ matrix.mc }}
+        shell: bash
         run: |
-          VERSION=$(grep "^mod_version" gradle.properties | cut -d'=' -f2 | tr -d ' \r\n')
-          MC_VERSION=$(grep "^minecraft_version" gradle.properties | cut -d'=' -f2 | tr -d ' \r\n')
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "mc_version=${MC_VERSION}" >> $GITHUB_OUTPUT
-          echo "tag=v${VERSION}-mc${MC_VERSION}" >> $GITHUB_OUTPUT
+          chmod +x ./gradlew
+          set +e
+          ./gradlew build -Pmc=${{ matrix.mc }} --no-daemon --console=plain 2>&1 | tee build.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            # Surface compiler errors as annotations (readable through the API).
+            grep -nE "error:|warning: \[|What went wrong|Caused by|Could not|FAILURE|^\s+at org.gradle" build.log \
+              | grep -vE "^\s+at " | head -400 > errors.txt
+            { grep -A25 -E "What went wrong" build.log | head -80; echo "----- tail -----"; tail -n 60 build.log; echo "----- errors -----"; grep -A3 -E "error:" build.log | head -400; } > context.txt
+            i=0
+            split -l 40 errors.txt chunk_
+            for f in chunk_*; do
+              i=$((i+1)); [ $i -gt 6 ] && break
+              msg=$(sed 's/%/%25/g; s/\r/%0D/g' "$f" | awk '{printf "%s%%0A", $0}')
+              echo "::error title=Build ${{ matrix.mc }} errors ($i)::${msg}"
+            done
+            split -l 60 context.txt ctx_
+            i=0
+            for f in ctx_*; do
+              i=$((i+1)); [ $i -gt 4 ] && break
+              msg=$(sed 's/%/%25/g; s/\r/%0D/g' "$f" | awk '{printf "%s%%0A", $0}')
+              echo "::error title=Build ${{ matrix.mc }} context ($i)::${msg}"
+            done
+          fi
+          exit $status
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - name: Inspect jar
+        shell: bash
+        run: |
+          jar=$(ls build/libs/*.jar | grep -v sources | head -1)
+          echo "Jar: $jar ($(du -h "$jar" | cut -f1))"
+          rm -rf /tmp/inspect && mkdir /tmp/inspect && unzip -q "$jar" -d /tmp/inspect
+          echo "--- fabric.mod.json"; cat /tmp/inspect/fabric.mod.json
+          echo; echo "--- mixins"; cat /tmp/inspect/jukeboxplus.mixins.json
+          echo; echo "--- classes"; (cd /tmp/inspect && find . -name '*.class' | sort)
+          echo "--- assets"; (cd /tmp/inspect && find assets -type f | sort)
+          python3 -c "import json;json.load(open('/tmp/inspect/fabric.mod.json'));json.load(open('/tmp/inspect/jukeboxplus.mixins.json'));json.load(open('/tmp/inspect/assets/jukeboxplus/tracks.json'))"
+          test -f /tmp/inspect/com/example/jukeboxplus/gui/PlayerScreen.class
+          test -f /tmp/inspect/com/example/jukeboxplus/mixin/SoundEngineMixin.class
+          n=$(python3 -c "import json;print(len(json.load(open('/tmp/inspect/assets/jukeboxplus/tracks.json'))))")
+          info=$(grep -hE "sounds.json of|Could not read sounds.json|Tracks without metadata" build.log | tr '\n' ' ')
+          echo "::notice title=Jar ${{ matrix.mc }}::$(basename "$jar") – $n tracks – $info"
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v7
         with:
-          name: jukeboxplus-${{ steps.version.outputs.tag }}
-          path: build/libs/*.jar
+          name: jukeboxplus-mc${{ matrix.mc }}
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
           if-no-files-found: error
 
-      - name: Check if tag already exists
-        id: tag_check
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-        run: |
-          TAG="${{ steps.version.outputs.tag }}"
-          if git ls-remote --tags origin | grep -q "refs/tags/$TAG$"; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
+  release:
+    name: GitHub release
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
 
-      - name: Create GitHub Release
-        if: |
-          github.event_name == 'push' &&
-          (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
-          steps.tag_check.outputs.exists == 'false'
+      - name: Read mod version
+        id: version
+        run: echo "mod_version=$(grep '^mod_version=' gradle.properties | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Download all jars
+        uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+          pattern: jukeboxplus-mc*
+          merge-multiple: true
+
+      - name: List jars
+        run: ls -la artifacts
+
+      - name: Create or update release v${{ steps.version.outputs.mod_version }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: "JukeBoxPlus ${{ steps.version.outputs.version }} for MC ${{ steps.version.outputs.mc_version }}"
+          tag_name: v${{ steps.version.outputs.mod_version }}
+          name: JukeboxPlus ${{ steps.version.outputs.mod_version }}
+          files: artifacts/*.jar
+          generate_release_notes: true
           body: |
-            ## 🎵 JukeBoxPlus `${{ steps.version.outputs.version }}`
-            **Minecraft** : `${{ steps.version.outputs.mc_version }}`
+            One jar per Minecraft version. Pick the file matching your game version
+            (`jukeboxplus-${{ steps.version.outputs.mod_version }}+mc<version>.jar`) and drop it in your `mods` folder together with Fabric API.
 
-            ### 📦 Installation
-            Télécharge le fichier `.jar` ci-dessous et place-le dans ton dossier `mods/`.
-
-            > ⚠️ Ne pas utiliser le fichier `-sources.jar`, il est réservé aux développeurs.
-
-            ---
-            *Build automatique via GitHub Actions*
-          files: |
-            build/libs/*.jar
-          draft: false
-          prerelease: false
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            | Jar | Minecraft |
+            |-----|-----------|
+            | `+mc1.19.2`  | 1.19.2 |
+            | `+mc1.19.4`  | 1.19.3 – 1.19.4 |
+            | `+mc1.20.1`  | 1.20 – 1.20.1 |
+            | `+mc1.20.4`  | 1.20.2 – 1.20.4 |
+            | `+mc1.20.6`  | 1.20.5 – 1.20.6 |
+            | `+mc1.21.1`  | 1.21 – 1.21.1 |
+            | `+mc1.21.4`  | 1.21.2 – 1.21.4 |
+            | `+mc1.21.5`  | 1.21.5 |
+            | `+mc1.21.8`  | 1.21.6 – 1.21.8 |
+            | `+mc1.21.10` | 1.21.9 – 1.21.10 |
+            | `+mc1.21.11` | 1.21.11 |
+            | `+mc26.1`    | 26.1.x |
+            | `+mc26.2`    | 26.2.x |
+            | `+mc26.3`    | 26.3.x |
