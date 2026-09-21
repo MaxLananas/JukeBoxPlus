@@ -13,7 +13,6 @@
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 
-import java.util.zip.ZipFile
 
 buildscript {
     repositories {
@@ -104,39 +103,33 @@ tasks.register('generateTrackData') {
     outputs.dir outDir
 
     doLast {
-        // Locate the (remapped or not) client jar on the compile classpath.
-        List<File> candidates = []
-        ['minecraftNamed', 'minecraftNamedCompile', 'minecraft', 'compileClasspath'].each { name ->
-            def c = configurations.findByName(name)
-            if (c != null && c.canBeResolved) {
-                try { candidates.addAll(c.files) } catch (Exception e) { logger.info("cannot resolve ${name}: ${e.message}") }
-            }
-        }
-        // Loom also keeps the merged jar in its cache; fall back to a scan of the daemon's known files.
-        logger.lifecycle("TRACKDATA configs: ${configurations.names.findAll { it.toLowerCase().contains('minecraft') }}")
-        logger.lifecycle("TRACKDATA candidates: ${candidates.findAll { it.name.toLowerCase().contains('minecraft') }*.name}")
-        def mcJar = candidates.find { f -> f.name.endsWith('.jar') && isMinecraftJar(f) }
-        logger.lifecycle("Minecraft jar for track data: ${mcJar}")
+        def dir0 = layout.buildDirectory.dir('trackdata').get().asFile
+        // sounds.json is not inside the client jar: it is an object of the asset index.
+        // Resolve it through Mojang's version manifest (cached under build/).
         Set<String> available = new HashSet<>()
-        if (mcJar == null) {
-            logger.warn("Could not find the Minecraft jar on the classpath; shipping every known track")
-        } else {
-            new ZipFile(mcJar).withCloseable { zip ->
-                def entry = zip.getEntry('assets/minecraft/sounds.json')
-                if (entry == null) {
-                    logger.warn("${mcJar.name} has no sounds.json; shipping every known track")
-                } else {
-                    def sounds = new JsonSlurper().parse(zip.getInputStream(entry))
-                    sounds.each { String key, Object def_ ->
-                        if (!key.startsWith('music')) return
-                        (def_.sounds ?: []).each { s ->
-                            if (s instanceof String) available << s
-                            else if (s instanceof Map && s.type != 'event' && s.name) available << (s.name as String)
-                        }
-                    }
-                    logger.lifecycle("sounds.json of ${mcJar.name}: ${available.size()} music files")
+        try {
+            def cache = new File(dir0, "sounds-${minecraftVersion}.json")
+            if (!cache.exists()) {
+                def manifest = new JsonSlurper().parse(new URL('https://piston-meta.mojang.com/mc/game/version_manifest_v2.json'))
+                def entry = manifest.versions.find { it.id == minecraftVersion }
+                if (entry == null) throw new GradleException("Unknown version ${minecraftVersion} in Mojang manifest")
+                def versionJson = new JsonSlurper().parse(new URL(entry.url as String))
+                def index = new JsonSlurper().parse(new URL(versionJson.assetIndex.url as String))
+                def hash = index.objects['minecraft/sounds.json'].hash as String
+                cache.parentFile.mkdirs()
+                cache.bytes = new URL("https://resources.download.minecraft.net/${hash.substring(0, 2)}/${hash}").bytes
+            }
+            def sounds = new JsonSlurper().parse(cache)
+            sounds.each { String key, Object def_ ->
+                if (!key.startsWith('music')) return
+                (def_.sounds ?: []).each { s ->
+                    if (s instanceof String) available << s
+                    else if (s instanceof Map && s.type != 'event' && s.name) available << (s.name as String)
                 }
             }
+            logger.lifecycle("sounds.json of Minecraft ${minecraftVersion}: ${available.size()} music files")
+        } catch (Exception e) {
+            logger.warn("Could not read sounds.json for ${minecraftVersion} (${e.message}); shipping every known track")
         }
 
         def meta = new JsonSlurper().parse(metaFile)
@@ -159,14 +152,6 @@ tasks.register('generateTrackData') {
         new File(assets, 'tracks.json').text = JsonOutput.prettyPrint(JsonOutput.toJson(tracks))
         new File(assets, 'sounds.json').text = JsonOutput.prettyPrint(JsonOutput.toJson(soundsJson))
         logger.lifecycle("Generated tracks.json with ${tracks.size()} tracks for Minecraft ${minecraftVersion}")
-    }
-}
-
-static boolean isMinecraftJar(File f) {
-    try {
-        new ZipFile(f).withCloseable { zip -> return zip.getEntry('assets/minecraft/sounds.json') != null }
-    } catch (Exception ignored) {
-        return false
     }
 }
 
