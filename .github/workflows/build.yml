@@ -56,9 +56,33 @@ jobs:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       - name: Build for Minecraft ${{ matrix.mc }}
+        shell: bash
         run: |
           chmod +x ./gradlew
-          ./gradlew build -Pmc=${{ matrix.mc }} --stacktrace --no-daemon
+          set +e
+          ./gradlew build -Pmc=${{ matrix.mc }} --no-daemon --console=plain 2>&1 | tee build.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            # Surface compiler errors as annotations (readable through the API).
+            grep -nE "error:|warning: \[|What went wrong|Caused by|Could not|FAILURE|^\s+at org.gradle" build.log \
+              | grep -vE "^\s+at " | head -400 > errors.txt
+            grep -A3 -E "error:" build.log | head -600 > context.txt
+            i=0
+            split -l 40 errors.txt chunk_
+            for f in chunk_*; do
+              i=$((i+1)); [ $i -gt 6 ] && break
+              msg=$(sed 's/%/%25/g; s/\r/%0D/g' "$f" | awk '{printf "%s%%0A", $0}')
+              echo "::error title=Build ${{ matrix.mc }} errors ($i)::${msg}"
+            done
+            split -l 60 context.txt ctx_
+            i=0
+            for f in ctx_*; do
+              i=$((i+1)); [ $i -gt 4 ] && break
+              msg=$(sed 's/%/%25/g; s/\r/%0D/g' "$f" | awk '{printf "%s%%0A", $0}')
+              echo "::error title=Build ${{ matrix.mc }} context ($i)::${msg}"
+            done
+          fi
+          exit $status
 
       - name: Upload jar
         uses: actions/upload-artifact@v7
