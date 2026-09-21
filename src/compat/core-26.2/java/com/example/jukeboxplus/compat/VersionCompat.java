@@ -39,6 +39,6 @@ final class VersionCompat {
 
     /** Resource id of the .ogg behind a sound instance (accessor renamed in 26.x). */
     String soundLocation(SoundInstance instance) {
-        return String.valueOf(instance.getSound().getIdentifier());
+        return String.valueOf(instance.getSound().getLocation());
     }
 }

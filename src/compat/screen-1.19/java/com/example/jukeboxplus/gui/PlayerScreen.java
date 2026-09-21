@@ -17,6 +17,14 @@ public final class PlayerScreen extends BasePlayerScreen {
     }
 
     @Override
+    protected void unfocusSearch() {
+        // AbstractWidget#setFocused(boolean) is protected on 1.19.x; a click outside the box
+        // is the portable way to make the EditBox release focus.
+        if (search != null) search.mouseClicked(-1, -1, 0);
+        setFocused(null);
+    }
+
+    @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (clickUi(mouseX, mouseY, button)) return true;
         return super.mouseClicked(mouseX, mouseY, button);

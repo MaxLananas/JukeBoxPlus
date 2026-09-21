@@ -67,8 +67,13 @@ public abstract class BasePlayerScreen extends Screen {
 
     protected boolean clickUi(double mx, double my, int button) {
         if (search != null && search.visible && search.isMouseOver(mx, my)) return false; // let the box handle it
-        if (search != null) search.setFocused(false);
+        unfocusSearch();
         return ui.mouseClicked(mx, my, button);
+    }
+
+    /** Drops keyboard focus from the search box (API differs on 1.19.x, overridden there). */
+    protected void unfocusSearch() {
+        if (search != null) search.setFocused(false);
     }
 
     protected boolean releaseUi(double mx, double my, int button) {

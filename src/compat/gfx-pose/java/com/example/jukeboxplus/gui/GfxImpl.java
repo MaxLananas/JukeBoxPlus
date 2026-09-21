@@ -7,6 +7,14 @@ import net.minecraft.client.gui.GuiComponent;
 
 /** {@link Gfx} for 1.19.x, drawing through a {@link PoseStack}. */
 public final class GfxImpl implements Gfx {
+    private static final GradientHelper HELPER = new GradientHelper();
+
+    private static final class GradientHelper extends GuiComponent {
+        void gradient(PoseStack pose, int x1, int y1, int x2, int y2, int top, int bottom) {
+            fillGradient(pose, x1, y1, x2, y2, top, bottom);
+        }
+    }
+
 
     private final PoseStack pose;
     private final Minecraft mc = Minecraft.getInstance();
@@ -21,7 +29,8 @@ public final class GfxImpl implements Gfx {
     }
 
     @Override public void fillGradient(int x1, int y1, int x2, int y2, int top, int bottom) {
-        GuiComponent.fillGradient(pose, x1, y1, x2, y2, top, bottom, 0);
+        // The static 8-arg overload is protected on 1.19.x; use a throwaway subclass instance.
+        HELPER.gradient(pose, x1, y1, x2, y2, top, bottom);
     }
 
     @Override public void text(String text, int x, int y, int argb, boolean shadow) {

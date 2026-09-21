@@ -16,7 +16,7 @@ public final class Platform {
     private Platform() {}
 
     public static void registerKeys(JukeboxPlus mod) {
-        KeyMapping.Category category = KeyMapping.Category.create(ResourceLocation.fromNamespaceAndPath(JukeboxPlus.MOD_ID, "main"));
+        KeyMapping.Category category = KeyMapping.Category.register(ResourceLocation.fromNamespaceAndPath(JukeboxPlus.MOD_ID, "main"));
         for (JukeboxPlus.Action a : JukeboxPlus.Action.values()) {
             InputConstants.Key key = keyFor(a.defaultKey);
             KeyMapping km = new KeyMapping(a.translationKey(), key.getValue(), category);
