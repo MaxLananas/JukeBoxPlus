@@ -98,7 +98,7 @@ jobs:
           test -f /tmp/inspect/com/example/jukeboxplus/gui/PlayerScreen.class
           test -f /tmp/inspect/com/example/jukeboxplus/mixin/SoundEngineMixin.class
           n=$(python3 -c "import json;print(len(json.load(open('/tmp/inspect/assets/jukeboxplus/tracks.json'))))")
-          info=$(grep -hE "Minecraft jar for track data|sounds.json of|Could not find the Minecraft|has no sounds.json|Tracks without metadata" build.log | tr '\n' ' ')
+          info=$(grep -hE "TRACKDATA|Minecraft jar for track data|sounds.json of|Could not find the Minecraft|has no sounds.json|Tracks without metadata" build.log | tr '\n' ' ')
           echo "::notice title=Jar ${{ matrix.mc }}::$(basename "$jar") – $n tracks – $info"
 
       - name: Upload jar

@@ -113,6 +113,8 @@ tasks.register('generateTrackData') {
             }
         }
         // Loom also keeps the merged jar in its cache; fall back to a scan of the daemon's known files.
+        logger.lifecycle("TRACKDATA configs: ${configurations.names.findAll { it.toLowerCase().contains('minecraft') }}")
+        logger.lifecycle("TRACKDATA candidates: ${candidates.findAll { it.name.toLowerCase().contains('minecraft') }*.name}")
         def mcJar = candidates.find { f -> f.name.endsWith('.jar') && isMinecraftJar(f) }
         logger.lifecycle("Minecraft jar for track data: ${mcJar}")
         Set<String> available = new HashSet<>()
