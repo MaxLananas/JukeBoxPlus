@@ -105,9 +105,16 @@ tasks.register('generateTrackData') {
 
     doLast {
         // Locate the (remapped or not) client jar on the compile classpath.
-        def mcJar = configurations.compileClasspath.resolvedConfiguration.resolvedArtifacts
-                .collect { it.file }
-                .find { f -> f.name.endsWith('.jar') && isMinecraftJar(f) }
+        List<File> candidates = []
+        ['minecraftNamed', 'minecraftNamedCompile', 'minecraft', 'compileClasspath'].each { name ->
+            def c = configurations.findByName(name)
+            if (c != null && c.canBeResolved) {
+                try { candidates.addAll(c.files) } catch (Exception e) { logger.info("cannot resolve ${name}: ${e.message}") }
+            }
+        }
+        // Loom also keeps the merged jar in its cache; fall back to a scan of the daemon's known files.
+        def mcJar = candidates.find { f -> f.name.endsWith('.jar') && isMinecraftJar(f) }
+        logger.lifecycle("Minecraft jar for track data: ${mcJar}")
         Set<String> available = new HashSet<>()
         if (mcJar == null) {
             logger.warn("Could not find the Minecraft jar on the classpath; shipping every known track")
