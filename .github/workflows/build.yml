@@ -66,7 +66,7 @@ jobs:
             # Surface compiler errors as annotations (readable through the API).
             grep -nE "error:|warning: \[|What went wrong|Caused by|Could not|FAILURE|^\s+at org.gradle" build.log \
               | grep -vE "^\s+at " | head -400 > errors.txt
-            grep -A3 -E "error:" build.log | head -600 > context.txt
+            { grep -A25 -E "What went wrong" build.log | head -80; echo "----- tail -----"; tail -n 60 build.log; echo "----- errors -----"; grep -A3 -E "error:" build.log | head -400; } > context.txt
             i=0
             split -l 40 errors.txt chunk_
             for f in chunk_*; do
