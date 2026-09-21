@@ -3,10 +3,12 @@
   "id": "jukeboxplus",
   "version": "${version}",
   "name": "JukeboxPlus",
-  "description": "Enhanced music player for Minecraft",
+  "description": "A proper music player for Minecraft: browse and play every vanilla track and music disc, see what is playing, and keep a history.",
   "authors": ["MaxLananas"],
   "contact": {
-    "sources": "https://github.com/MaxLananas/JukeBoxPlus"
+    "homepage": "https://github.com/MaxLananas/JukeBoxPlus",
+    "sources": "https://github.com/MaxLananas/JukeBoxPlus",
+    "issues": "https://github.com/MaxLananas/JukeBoxPlus/issues"
   },
   "license": "MIT",
   "icon": "assets/jukeboxplus/icon.png",
@@ -14,11 +16,16 @@
   "entrypoints": {
     "client": ["com.example.jukeboxplus.JukeboxPlus"]
   },
-  "mixins": ["jukeboxplus.mixins.json"],
+  "mixins": [
+    {
+      "config": "jukeboxplus.mixins.json",
+      "environment": "client"
+    }
+  ],
   "depends": {
-    "fabricloader": ">=0.19.3",
-    "minecraft": "~1.21.10",
-    "java": ">=21",
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "${minecraft_range}",
+    "java": ">=${java_version}",
     "fabric-api": "*"
   }
 }

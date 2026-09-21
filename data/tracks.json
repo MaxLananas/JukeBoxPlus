@@ -1,0 +1,870 @@
+[
+  {
+    "path": "records/13",
+    "title": "13",
+    "artist": "C418",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/cat",
+    "title": "Cat",
+    "artist": "C418",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/blocks",
+    "title": "Blocks",
+    "artist": "C418",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/chirp",
+    "title": "Chirp",
+    "artist": "C418",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/far",
+    "title": "Far",
+    "artist": "C418",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/mall",
+    "title": "Mall",
+    "artist": "C418",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/mellohi",
+    "title": "Mellohi",
+    "artist": "C418",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/stal",
+    "title": "Stal",
+    "artist": "C418",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/strad",
+    "title": "Strad",
+    "artist": "C418",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/ward",
+    "title": "Ward",
+    "artist": "C418",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/11",
+    "title": "11",
+    "artist": "C418",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/wait",
+    "title": "Wait",
+    "artist": "C418",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/otherside",
+    "title": "Otherside",
+    "artist": "Lena Raine",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/5",
+    "title": "5",
+    "artist": "Samuel Åberg",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/pigstep",
+    "title": "Pigstep",
+    "artist": "Lena Raine",
+    "category": "discs",
+    "since": "1.19"
+  },
+  {
+    "path": "records/relic",
+    "title": "Relic",
+    "artist": "Aaron Cherof",
+    "category": "discs",
+    "since": "1.20"
+  },
+  {
+    "path": "records/creator",
+    "title": "Creator",
+    "artist": "Lena Raine",
+    "category": "discs",
+    "since": "1.21"
+  },
+  {
+    "path": "records/creator_music_box",
+    "title": "Creator (Music Box)",
+    "artist": "Lena Raine",
+    "category": "discs",
+    "since": "1.21"
+  },
+  {
+    "path": "records/precipice",
+    "title": "Precipice",
+    "artist": "Aaron Cherof",
+    "category": "discs",
+    "since": "1.21"
+  },
+  {
+    "path": "records/tears",
+    "title": "Tears",
+    "artist": "Aaron Cherof",
+    "category": "discs",
+    "since": "1.21.6"
+  },
+  {
+    "path": "records/lava_chicken",
+    "title": "Lava Chicken",
+    "artist": "Hyper Potions",
+    "category": "discs",
+    "since": "1.21.6"
+  },
+  {
+    "path": "records/bounce",
+    "title": "Bounce",
+    "artist": "Minecraft OST",
+    "category": "discs",
+    "since": "26.2"
+  },
+  {
+    "path": "music/game/calm1",
+    "title": "Minecraft",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/minecraft",
+    "title": "Minecraft",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/calm2",
+    "title": "Clark",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/clark",
+    "title": "Clark",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/calm3",
+    "title": "Sweden",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/sweden",
+    "title": "Sweden",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/hal1",
+    "title": "Subwoofer Lullaby",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/subwoofer_lullaby",
+    "title": "Subwoofer Lullaby",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/hal2",
+    "title": "Living Mice",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/living_mice",
+    "title": "Living Mice",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/hal3",
+    "title": "Haggstrom",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/haggstrom",
+    "title": "Haggstrom",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/hal4",
+    "title": "Danny",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/danny",
+    "title": "Danny",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/nuance1",
+    "title": "Key",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/key",
+    "title": "Key",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/nuance2",
+    "title": "Oxygène",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/oxygene",
+    "title": "Oxygène",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/piano1",
+    "title": "Dry Hands",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/dry_hands",
+    "title": "Dry Hands",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/piano2",
+    "title": "Wet Hands",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/wet_hands",
+    "title": "Wet Hands",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/piano3",
+    "title": "Mice on Venus",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/mice_on_venus",
+    "title": "Mice on Venus",
+    "artist": "C418",
+    "category": "overworld",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/creative/creative1",
+    "title": "Biome Fest",
+    "artist": "C418",
+    "category": "creative",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/creative/biome_fest",
+    "title": "Biome Fest",
+    "artist": "C418",
+    "category": "creative",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/creative/creative2",
+    "title": "Blind Spots",
+    "artist": "C418",
+    "category": "creative",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/creative/blind_spots",
+    "title": "Blind Spots",
+    "artist": "C418",
+    "category": "creative",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/creative/creative3",
+    "title": "Haunt Muskie",
+    "artist": "C418",
+    "category": "creative",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/creative/haunt_muskie",
+    "title": "Haunt Muskie",
+    "artist": "C418",
+    "category": "creative",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/creative/creative4",
+    "title": "Aria Math",
+    "artist": "C418",
+    "category": "creative",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/creative/aria_math",
+    "title": "Aria Math",
+    "artist": "C418",
+    "category": "creative",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/creative/creative5",
+    "title": "Dreiton",
+    "artist": "C418",
+    "category": "creative",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/creative/dreiton",
+    "title": "Dreiton",
+    "artist": "C418",
+    "category": "creative",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/creative/creative6",
+    "title": "Taswell",
+    "artist": "C418",
+    "category": "creative",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/creative/taswell",
+    "title": "Taswell",
+    "artist": "C418",
+    "category": "creative",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/menu/menu1",
+    "title": "Mutation",
+    "artist": "C418",
+    "category": "menu",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/menu/mutation",
+    "title": "Mutation",
+    "artist": "C418",
+    "category": "menu",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/menu/menu2",
+    "title": "Moog City 2",
+    "artist": "C418",
+    "category": "menu",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/menu/moog_city_2",
+    "title": "Moog City 2",
+    "artist": "C418",
+    "category": "menu",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/menu/menu3",
+    "title": "Beginning 2",
+    "artist": "C418",
+    "category": "menu",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/menu/beginning_2",
+    "title": "Beginning 2",
+    "artist": "C418",
+    "category": "menu",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/menu/menu4",
+    "title": "Floating Trees",
+    "artist": "C418",
+    "category": "menu",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/menu/floating_trees",
+    "title": "Floating Trees",
+    "artist": "C418",
+    "category": "menu",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/nether/nether1",
+    "title": "Concrete Halls",
+    "artist": "C418",
+    "category": "nether",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/nether/concrete_halls",
+    "title": "Concrete Halls",
+    "artist": "C418",
+    "category": "nether",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/nether/nether2",
+    "title": "Dead Voxel",
+    "artist": "C418",
+    "category": "nether",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/nether/dead_voxel",
+    "title": "Dead Voxel",
+    "artist": "C418",
+    "category": "nether",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/nether/nether3",
+    "title": "Warmth",
+    "artist": "C418",
+    "category": "nether",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/nether/warmth",
+    "title": "Warmth",
+    "artist": "C418",
+    "category": "nether",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/nether/nether4",
+    "title": "Ballad of the Cats",
+    "artist": "C418",
+    "category": "nether",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/nether/ballad_of_the_cats",
+    "title": "Ballad of the Cats",
+    "artist": "C418",
+    "category": "nether",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/end/end",
+    "title": "The End",
+    "artist": "C418",
+    "category": "end",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/end/the_end",
+    "title": "The End",
+    "artist": "C418",
+    "category": "end",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/end/credits",
+    "title": "Alpha",
+    "artist": "C418",
+    "category": "end",
+    "since": "1.19",
+    "until": "1.20.1"
+  },
+  {
+    "path": "music/game/end/alpha",
+    "title": "Alpha",
+    "artist": "C418",
+    "category": "end",
+    "since": "1.20.2"
+  },
+  {
+    "path": "music/game/end/boss",
+    "title": "Boss",
+    "artist": "C418",
+    "category": "end",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/nether/soulsand_valley/so_below",
+    "title": "So Below",
+    "artist": "Lena Raine",
+    "category": "nether",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/nether/nether_wastes/rubedo",
+    "title": "Rubedo",
+    "artist": "Lena Raine",
+    "category": "nether",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/nether/crimson_forest/chrysopoeia",
+    "title": "Chrysopoeia",
+    "artist": "Lena Raine",
+    "category": "nether",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/water/axolotl",
+    "title": "Axolotl",
+    "artist": "C418",
+    "category": "water",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/water/dragon_fish",
+    "title": "Dragon Fish",
+    "artist": "C418",
+    "category": "water",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/water/shuniji",
+    "title": "Shuniji",
+    "artist": "C418",
+    "category": "water",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/stand_tall",
+    "title": "Stand Tall",
+    "artist": "Lena Raine",
+    "category": "overworld",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/left_to_bloom",
+    "title": "Left to Bloom",
+    "artist": "Lena Raine",
+    "category": "overworld",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/one_more_day",
+    "title": "One More Day",
+    "artist": "Lena Raine",
+    "category": "overworld",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/wending",
+    "title": "Wending",
+    "artist": "Lena Raine",
+    "category": "overworld",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/infinite_amethyst",
+    "title": "Infinite Amethyst",
+    "artist": "Lena Raine",
+    "category": "overworld",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/an_ordinary_day",
+    "title": "An Ordinary Day",
+    "artist": "Kumi Tanioka",
+    "category": "overworld",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/floating_dream",
+    "title": "Floating Dream",
+    "artist": "Kumi Tanioka",
+    "category": "overworld",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/comforting_memories",
+    "title": "Comforting Memories",
+    "artist": "Kumi Tanioka",
+    "category": "overworld",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/ancestry",
+    "title": "Ancestry",
+    "artist": "Lena Raine",
+    "category": "overworld",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/swamp/aerie",
+    "title": "Aerie",
+    "artist": "Lena Raine",
+    "category": "overworld",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/swamp/firebugs",
+    "title": "Firebugs",
+    "artist": "Lena Raine",
+    "category": "overworld",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/swamp/labyrinthine",
+    "title": "Labyrinthine",
+    "artist": "Lena Raine",
+    "category": "overworld",
+    "since": "1.19"
+  },
+  {
+    "path": "music/game/a_familiar_room",
+    "title": "A Familiar Room",
+    "artist": "Aaron Cherof",
+    "category": "overworld",
+    "since": "1.20"
+  },
+  {
+    "path": "music/game/bromeliad",
+    "title": "Bromeliad",
+    "artist": "Aaron Cherof",
+    "category": "overworld",
+    "since": "1.20"
+  },
+  {
+    "path": "music/game/crescent_dunes",
+    "title": "Crescent Dunes",
+    "artist": "Aaron Cherof",
+    "category": "overworld",
+    "since": "1.20"
+  },
+  {
+    "path": "music/game/echo_in_the_wind",
+    "title": "Echo in the Wind",
+    "artist": "Aaron Cherof",
+    "category": "overworld",
+    "since": "1.20"
+  },
+  {
+    "path": "music/game/featherfall",
+    "title": "Featherfall",
+    "artist": "Aaron Cherof",
+    "category": "overworld",
+    "since": "1.21"
+  },
+  {
+    "path": "music/game/watcher",
+    "title": "Watcher",
+    "artist": "Aaron Cherof",
+    "category": "overworld",
+    "since": "1.21"
+  },
+  {
+    "path": "music/game/deeper",
+    "title": "Deeper",
+    "artist": "Lena Raine",
+    "category": "overworld",
+    "since": "1.21"
+  },
+  {
+    "path": "music/game/eld_unknown",
+    "title": "Eld Unknown",
+    "artist": "Lena Raine",
+    "category": "overworld",
+    "since": "1.21"
+  },
+  {
+    "path": "music/game/endless",
+    "title": "Endless",
+    "artist": "Lena Raine",
+    "category": "overworld",
+    "since": "1.21"
+  },
+  {
+    "path": "music/game/komorebi",
+    "title": "Komorebi",
+    "artist": "Kumi Tanioka",
+    "category": "overworld",
+    "since": "1.21"
+  },
+  {
+    "path": "music/game/pokopoko",
+    "title": "Pokopoko",
+    "artist": "Kumi Tanioka",
+    "category": "overworld",
+    "since": "1.21"
+  },
+  {
+    "path": "music/game/puzzlebox",
+    "title": "Puzzlebox",
+    "artist": "Kumi Tanioka",
+    "category": "overworld",
+    "since": "1.21"
+  },
+  {
+    "path": "music/game/yakusoku",
+    "title": "Yakusoku",
+    "artist": "Kumi Tanioka",
+    "category": "overworld",
+    "since": "1.21"
+  },
+  {
+    "path": "music/game/below_and_above",
+    "title": "Below and Above",
+    "artist": "Amos Roddy",
+    "category": "overworld",
+    "since": "1.21.5"
+  },
+  {
+    "path": "music/game/broken_clocks",
+    "title": "Broken Clocks",
+    "artist": "Amos Roddy",
+    "category": "overworld",
+    "since": "1.21.5"
+  },
+  {
+    "path": "music/game/fireflies",
+    "title": "Fireflies",
+    "artist": "Amos Roddy",
+    "category": "overworld",
+    "since": "1.21.5"
+  },
+  {
+    "path": "music/game/lilypad",
+    "title": "Lilypad",
+    "artist": "Amos Roddy",
+    "category": "overworld",
+    "since": "1.21.5"
+  },
+  {
+    "path": "music/game/os_piano",
+    "title": "O's Piano",
+    "artist": "Amos Roddy",
+    "category": "overworld",
+    "since": "1.21.5"
+  },
+  {
+    "path": "music/game/ebb",
+    "title": "Ebb",
+    "artist": "Minecraft OST",
+    "category": "overworld",
+    "since": "26.1"
+  },
+  {
+    "path": "music/game/home",
+    "title": "Home",
+    "artist": "Minecraft OST",
+    "category": "overworld",
+    "since": "26.1"
+  },
+  {
+    "path": "music/game/memories",
+    "title": "Memories",
+    "artist": "Minecraft OST",
+    "category": "overworld",
+    "since": "26.1"
+  },
+  {
+    "path": "music/game/nightly",
+    "title": "Nightly",
+    "artist": "Minecraft OST",
+    "category": "overworld",
+    "since": "26.1"
+  },
+  {
+    "path": "music/game/shores",
+    "title": "Shores",
+    "artist": "Minecraft OST",
+    "category": "overworld",
+    "since": "26.1"
+  }
+]
