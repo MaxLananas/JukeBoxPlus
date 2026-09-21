@@ -163,7 +163,7 @@ static boolean isMinecraftJar(File f) {
 
 sourceSets.main.resources.srcDir generatedResources
 tasks.named('processResources') { dependsOn 'generateTrackData' }
-tasks.named('sourcesJar') { dependsOn 'generateTrackData' }
+tasks.matching { it.name == 'sourcesJar' }.configureEach { dependsOn 'generateTrackData' }
 
 // ---------------------------------------------------------------- resources
 
