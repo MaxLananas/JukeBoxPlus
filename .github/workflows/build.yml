@@ -84,6 +84,22 @@ jobs:
           fi
           exit $status
 
+      - name: Inspect jar
+        shell: bash
+        run: |
+          jar=$(ls build/libs/*.jar | grep -v sources | head -1)
+          echo "Jar: $jar ($(du -h "$jar" | cut -f1))"
+          rm -rf /tmp/inspect && mkdir /tmp/inspect && unzip -q "$jar" -d /tmp/inspect
+          echo "--- fabric.mod.json"; cat /tmp/inspect/fabric.mod.json
+          echo; echo "--- mixins"; cat /tmp/inspect/jukeboxplus.mixins.json
+          echo; echo "--- classes"; (cd /tmp/inspect && find . -name '*.class' | sort)
+          echo "--- assets"; (cd /tmp/inspect && find assets -type f | sort)
+          python3 -c "import json;json.load(open('/tmp/inspect/fabric.mod.json'));json.load(open('/tmp/inspect/jukeboxplus.mixins.json'));json.load(open('/tmp/inspect/assets/jukeboxplus/tracks.json'))"
+          test -f /tmp/inspect/com/example/jukeboxplus/gui/PlayerScreen.class
+          test -f /tmp/inspect/com/example/jukeboxplus/mixin/SoundEngineMixin.class
+          n=$(python3 -c "import json;print(len(json.load(open('/tmp/inspect/assets/jukeboxplus/tracks.json'))))")
+          echo "::notice title=Jar ${{ matrix.mc }}::$(basename "$jar") – $n tracks"
+
       - name: Upload jar
         uses: actions/upload-artifact@v7
         with:
