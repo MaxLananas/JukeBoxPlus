@@ -1,87 +1,128 @@
 package com.example.jukeboxplus;
 
+import com.example.jukeboxplus.compat.Compat;
+import com.example.jukeboxplus.compat.Platform;
 import com.example.jukeboxplus.config.ModConfig;
-import com.example.jukeboxplus.gui.MusicOverlay;
-import com.example.jukeboxplus.gui.MusicPlayerScreen;
+import com.example.jukeboxplus.gui.Gfx;
+import com.example.jukeboxplus.gui.OverlayUi;
 import com.example.jukeboxplus.music.MusicPlayer;
 import com.example.jukeboxplus.music.MusicTracker;
-import com.mojang.blaze3d.platform.InputConstants;
+import com.example.jukeboxplus.music.TrackDatabase;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.KeyMapping;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
-import org.lwjgl.glfw.GLFW;
+import net.minecraft.client.resources.sounds.SoundInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JukeboxPlus implements ClientModInitializer {
+public final class JukeboxPlus implements ClientModInitializer {
 
     public static final String MOD_ID = "jukeboxplus";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    public static final Logger LOGGER = LoggerFactory.getLogger("JukeboxPlus");
+    public static final String VERSION = FabricLoader.getInstance().getModContainer(MOD_ID)
+            .map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("dev");
 
     private static JukeboxPlus instance;
-    private MusicTracker musicTracker;
-    private MusicPlayer musicPlayer;
-    private MusicOverlay musicOverlay;
 
-    private static KeyMapping toggleOverlayKey;
-    private static KeyMapping openPlayerKey;
-    private static KeyMapping toggleHistoryKey;
-    private static KeyMapping playPauseKey;
-    private static KeyMapping stopKey;
-    private static KeyMapping volumeUpKey;
-    private static KeyMapping volumeDownKey;
+    private MusicTracker tracker;
+    private MusicPlayer player;
+    private OverlayUi overlay;
+
+    /** Key actions, bound to key mappings by {@link Platform}. */
+    public enum Action {
+        OPEN_PLAYER("player", 'M'),
+        TOGGLE_OVERLAY("toggle_overlay", 'J'),
+        PLAY_PAUSE("playpause", 'P'),
+        STOP("stop", 'O'),
+        NEXT("next", ']'),
+        PREVIOUS("previous", '['),
+        VOLUME_UP("volume_up", '='),
+        VOLUME_DOWN("volume_down", '-');
+
+        public final String key;
+        /** Default key as a character; the platform maps it to the version's key code. */
+        public final char defaultKey;
+
+        Action(String key, char defaultKey) {
+            this.key = key;
+            this.defaultKey = defaultKey;
+        }
+
+        public String translationKey() { return "key.jukeboxplus." + key; }
+    }
 
     @Override
     public void onInitializeClient() {
         instance = this;
-        ModConfig.getInstance();
+        Minecraft mc = Minecraft.getInstance();
+        ModConfig.get();
+        TrackDatabase.load();
+        tracker = new MusicTracker(mc);
+        player = new MusicPlayer(mc, tracker);
+        overlay = new OverlayUi(player, tracker);
 
-        musicTracker = new MusicTracker();
-        musicPlayer = new MusicPlayer(musicTracker);
-        musicOverlay = new MusicOverlay(musicTracker, musicPlayer);
-
-        KeyMapping.Category cat = new KeyMapping.Category(ResourceLocation.parse("jukeboxplus:category"));
-        toggleOverlayKey = bind("toggle", GLFW.GLFW_KEY_J, cat);
-        openPlayerKey = bind("player", GLFW.GLFW_KEY_M, cat);
-        toggleHistoryKey = bind("history", GLFW.GLFW_KEY_K, cat);
-        playPauseKey = bind("playpause", GLFW.GLFW_KEY_P, cat);
-        stopKey = bind("stop", GLFW.GLFW_KEY_O, cat);
-        volumeUpKey = bind("volume_up", GLFW.GLFW_KEY_PAGE_UP, cat);
-        volumeDownKey = bind("volume_down", GLFW.GLFW_KEY_PAGE_DOWN, cat);
-
-        HudRenderCallback.EVENT.register((guiGraphics, deltaTracker) -> musicOverlay.render(guiGraphics));
+        Platform.registerKeys(this);
+        Platform.registerHud(this);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.player == null) return;
-            musicTracker.tick();
-            musicPlayer.tick();
-            handleKeys(client);
+            Platform.pollKeys(this);
+            player.tick();
+            tracker.tick();
         });
-
-        LOGGER.info("[JukeboxPlus] Initialized ✓");
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            player.onDisconnect();
+            tracker.onDisconnect();
+        });
+        LOGGER.info("JukeboxPlus {} ready (Minecraft {})", VERSION, Compat.targetVersion());
     }
 
-    private KeyMapping bind(String name, int key, KeyMapping.Category cat) {
-        return KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.jukeboxplus." + name, InputConstants.Type.KEYSYM, key, cat));
+    // ----------------------------------------------------------------- actions
+
+    public void run(Action action) {
+        Minecraft mc = Minecraft.getInstance();
+        switch (action) {
+            case OPEN_PLAYER:    Compat.openPlayer(mc); break;
+            case TOGGLE_OVERLAY: overlay.toggle(); break;
+            case PLAY_PAUSE:
+                if (player.hasTrack()) player.togglePause();
+                else if (!TrackDatabase.all().isEmpty()) player.play(TrackDatabase.all().get(0), TrackDatabase.all(), 0);
+                break;
+            case STOP:           player.stop(); break;
+            case NEXT:           player.next(); break;
+            case PREVIOUS:       player.previous(); break;
+            case VOLUME_UP:      player.adjustVolume(0.05f); break;
+            case VOLUME_DOWN:    player.adjustVolume(-0.05f); break;
+            default: break;
+        }
     }
 
-    private void handleKeys(Minecraft client) {
-        while (toggleOverlayKey.consumeClick()) musicOverlay.toggleVisibility();
-        while (openPlayerKey.consumeClick()) client.setScreen(new MusicPlayerScreen(musicPlayer, musicTracker));
-        while (toggleHistoryKey.consumeClick()) musicOverlay.toggleHistory();
-        while (playPauseKey.consumeClick()) musicPlayer.togglePlayPause();
-        while (stopKey.consumeClick()) musicPlayer.stop();
-        while (volumeUpKey.consumeClick()) musicPlayer.adjustVolume(0.1f);
-        while (volumeDownKey.consumeClick()) musicPlayer.adjustVolume(-0.1f);
+    /** HUD hook, called by the platform every frame with a version-specific {@link Gfx}. */
+    public void renderHud(Gfx g) {
+        Minecraft mc = Minecraft.getInstance();
+        if (Compat.isHudHidden(mc)) return;
+        if (Compat.isDebugShown(mc)) return;
+        try {
+            overlay.draw(g);
+        } catch (Exception e) {
+            LOGGER.error("Overlay rendering failed", e);
+        }
     }
 
-    public static JukeboxPlus getInstance()  { return instance; }
-    public MusicTracker getMusicTracker()     { return musicTracker; }
-    public MusicPlayer getMusicPlayer()       { return musicPlayer; }
-    public MusicOverlay getMusicOverlay()     { return musicOverlay; }
+    /** Called from the sound engine mixin. Must never throw. */
+    public static void onSoundPlay(SoundInstance sound) {
+        JukeboxPlus i = instance;
+        if (i == null || i.tracker == null) return;
+        try {
+            i.tracker.onSoundStarted(sound);
+        } catch (Throwable t) {
+            LOGGER.debug("Sound tracking failed", t);
+        }
+    }
+
+    public static JukeboxPlus get()     { return instance; }
+    public MusicTracker getTracker()    { return tracker; }
+    public MusicPlayer getPlayer()      { return player; }
+    public OverlayUi getOverlay()       { return overlay; }
 }
